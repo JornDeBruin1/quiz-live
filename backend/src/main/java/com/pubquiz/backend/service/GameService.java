@@ -1,7 +1,9 @@
 package com.pubquiz.backend.service;
 
 import com.pubquiz.backend.model.Game;
+import com.pubquiz.backend.model.GameEvent;
 import com.pubquiz.backend.model.Player;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -12,6 +14,12 @@ import java.util.Random;
 public class GameService {
 
     private final Map<String, Game> games = new HashMap<>();
+    private final SimpMessagingTemplate messagingTemplate;
+
+    // Spring injecteert SimpMessagingTemplate automatisch, net als bij GameService in de Controller
+    public GameService(SimpMessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
+    }
 
     public Game createGame() {
         String gameCode = generateGameCode();
@@ -33,7 +41,17 @@ public class GameService {
 
         Player player = new Player(playerName);
         game.addPlayer(player);
+
+        // Zodra een speler toegevoegd is, laten we alle geabonneerde clients (Host, Screen) dit direct weten
+        broadcast(gameCode, "PLAYER_JOINED", game);
+
         return player;
+    }
+
+    // Stuurt een GameEvent naar iedereen die geabonneerd is op het kanaal van dit specifieke spel
+    private void broadcast(String gameCode, String eventType, Object payload) {
+        GameEvent event = new GameEvent(eventType, payload);
+        messagingTemplate.convertAndSend("/topic/game/" + gameCode, event);
     }
 
     private String generateGameCode() {
