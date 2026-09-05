@@ -1,15 +1,22 @@
-import { useState } from "react";
-import JoinScreen from "./JoinScreen";
-import Quiz from "./Quiz";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import HostPage from "./pages/HostPage";
+import ScreenPage from "./pages/ScreenPage";
+import PlayerPage from "./pages/PlayerPage";
 import "./App.css";
 
 function App() {
-  const [player, setPlayer] = useState(null);
-
   return (
-    <div className="app">
-      {player ? <Quiz /> : <JoinScreen onJoined={setPlayer} />}
-    </div>
+    <BrowserRouter>
+      <div className="app">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/host" element={<HostPage />} />
+          <Route path="/screen/:gameCode" element={<ScreenPage />} />
+          <Route path="/player" element={<PlayerPage />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 
