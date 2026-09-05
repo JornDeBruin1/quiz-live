@@ -14,7 +14,7 @@ function JoinScreen({ onJoined }) {
 
     try {
       const player = await joinGame(gameCode, playerName);
-      onJoined(player);
+      onJoined(player, gameCode);
     } catch (err) {
       setError(err.message);
     } finally {

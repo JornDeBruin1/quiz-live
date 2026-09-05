@@ -5,13 +5,22 @@ const API_BASE_URL = "http://localhost:8080/api";
 
 function HostPage() {
   const [game, setGame] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
   const event = useGameSocket(game?.gameCode);
 
-  // Zodra er een PLAYER_JOINED event binnenkomt, bevat de payload het hele,
-  // bijgewerkte Game-object (inclusief de nieuwe speler) - dat zetten we direct als onze state
   useEffect(() => {
-    if (event?.type === "PLAYER_JOINED") {
+    if (!event) return;
+
+    if (event.type === "PLAYER_JOINED" || event.type === "ANSWER_SUBMITTED") {
       setGame(event.payload);
+    }
+
+    if (event.type === "QUESTION_STARTED") {
+      setCurrentQuestion(event.payload);
+    }
+
+    if (event.type === "GAME_FINISHED") {
+      setCurrentQuestion(null);
     }
   }, [event]);
 
@@ -19,6 +28,12 @@ function HostPage() {
     const response = await fetch(`${API_BASE_URL}/games`, { method: "POST" });
     const newGame = await response.json();
     setGame(newGame);
+  }
+
+  async function handleNextQuestion() {
+    await fetch(`${API_BASE_URL}/games/${game.gameCode}/next-question`, {
+      method: "POST",
+    });
   }
 
   if (!game) {
@@ -37,9 +52,20 @@ function HostPage() {
       <h2>Spelers ({game.players.length})</h2>
       <ul>
         {game.players.map((player) => (
-          <li key={player.name}>{player.name}</li>
+          <li key={player.name}>
+            {player.name} — {player.score} punten
+          </li>
         ))}
       </ul>
+
+      {currentQuestion && (
+        <div className="current-question">
+          <h3>Actieve vraag:</h3>
+          <p>{currentQuestion.text}</p>
+        </div>
+      )}
+
+      <button onClick={handleNextQuestion}>Volgende vraag</button>
     </div>
   );
 }

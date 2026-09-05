@@ -1,13 +1,23 @@
 import { useState } from "react";
 import JoinScreen from "../JoinScreen";
-import Quiz from "../Quiz";
+import PlayerGame from "./PlayerGame";
 
 function PlayerPage() {
   const [player, setPlayer] = useState(null);
+  const [gameCode, setGameCode] = useState(null);
+
+  function handleJoined(joinedPlayer, joinedGameCode) {
+    setPlayer(joinedPlayer);
+    setGameCode(joinedGameCode);
+  }
 
   return (
     <div className="player-page">
-      {player ? <Quiz /> : <JoinScreen onJoined={setPlayer} />}
+      {player ? (
+        <PlayerGame gameCode={gameCode} playerName={player.name} />
+      ) : (
+        <JoinScreen onJoined={handleJoined} />
+      )}
     </div>
   );
 }

@@ -46,6 +46,36 @@ public class GameController {
         return ResponseEntity.ok(player);
     }
 
+    // De host roept dit aan om de volgende vraag te starten
+    @PostMapping("/{code}/next-question")
+    public ResponseEntity<Void> startNextQuestion(@PathVariable String code) {
+        boolean success = gameService.startNextQuestion(code);
+
+        if (!success) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    // Een speler stuurt zijn antwoord in
+    @PostMapping("/{code}/answer")
+    public ResponseEntity<Void> submitAnswer(
+            @PathVariable String code,
+            @RequestBody AnswerRequest request) {
+
+        boolean success = gameService.submitAnswer(code, request.playerName(), request.answer());
+
+        if (!success) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
     public record PlayerRequest(String name) {
+    }
+
+    public record AnswerRequest(String playerName, String answer) {
     }
 }
