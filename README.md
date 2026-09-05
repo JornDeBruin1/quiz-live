@@ -74,7 +74,6 @@ This means clients do not decide whether an answer is correct or how many points
 ### Frontend
 
 * React
-* Ionic React
 * Vite
 * JavaScript
 * CSS
