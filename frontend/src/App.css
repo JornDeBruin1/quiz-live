@@ -58,3 +58,21 @@ button {
   cursor: pointer;
   margin-top: 10px;
 }
+
+.join-screen form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.join-screen input {
+  padding: 12px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+}
+
+.error {
+  color: #ef4444;
+  margin-top: 10px;
+}
