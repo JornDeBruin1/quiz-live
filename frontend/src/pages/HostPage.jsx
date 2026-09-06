@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import useGameSocket from "../useGameSocket";
 
 const API_BASE_URL = "http://localhost:8080/api";
 
 function HostPage() {
+  const [searchParams] = useSearchParams();
+  const quizId = searchParams.get("quizId");
+
   const [game, setGame] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const event = useGameSocket(game?.gameCode);
@@ -25,7 +29,11 @@ function HostPage() {
   }, [event]);
 
   async function handleCreateGame() {
-    const response = await fetch(`${API_BASE_URL}/games`, { method: "POST" });
+    const response = await fetch(`${API_BASE_URL}/games`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quizId }),
+    });
     const newGame = await response.json();
     setGame(newGame);
   }
@@ -40,6 +48,7 @@ function HostPage() {
     return (
       <div className="host-page">
         <h1>Host</h1>
+        {quizId ? <p>Quiz geladen, klaar om te starten.</p> : <p>Demo-quiz wordt gebruikt.</p>}
         <button onClick={handleCreateGame}>Nieuw spel starten</button>
       </div>
     );

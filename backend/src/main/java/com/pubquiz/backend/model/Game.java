@@ -13,6 +13,8 @@ public class Game {
     private int currentQuestionIndex = -1;
     private long questionDeadline = 0;
     private long questionStartTime = 0;
+    private String quizId;
+
 
     // Bijhouden wie er al geantwoord heeft op de huidige vraag,
     // zodat niemand twee keer kan antwoorden
@@ -44,6 +46,14 @@ public class Game {
 
     public long getQuestionStartTime() {
         return questionStartTime;
+    }
+
+    public String getQuizId() {
+        return quizId;
+    }
+
+    public void setQuizId(String quizId) {
+        this.quizId = quizId;
     }
 
     public void addPlayer(Player player) {

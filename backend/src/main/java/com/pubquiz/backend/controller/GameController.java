@@ -17,8 +17,9 @@ public class GameController {
     }
 
     @PostMapping
-    public Game createGame() {
-        return gameService.createGame();
+    public Game createGame(@RequestBody(required = false) CreateGameRequest request) {
+        String quizId = request != null ? request.quizId() : null;
+        return gameService.createGame(quizId);
     }
 
     @GetMapping("/{code}")
@@ -77,5 +78,7 @@ public class GameController {
     }
 
     public record AnswerRequest(String playerName, String answer) {
+    }
+    public record CreateGameRequest(String quizId) {
     }
 }

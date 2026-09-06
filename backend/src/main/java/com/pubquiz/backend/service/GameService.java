@@ -4,6 +4,7 @@ import com.pubquiz.backend.model.Game;
 import com.pubquiz.backend.model.GameEvent;
 import com.pubquiz.backend.model.Player;
 import com.pubquiz.backend.model.Question;
+import com.pubquiz.backend.model.Quiz;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,23 +17,26 @@ import java.util.Random;
 @Service
 public class GameService {
 
-    // Hoe lang een vraag duurt in seconden
     private static final int QUESTION_DURATION_SECONDS = 20;
+    private static final int MAX_POINTS = 1000;
+    private static final int MIN_POINTS_IF_CORRECT = 100;
 
     private final Map<String, Game> games = new HashMap<>();
     private final SimpMessagingTemplate messagingTemplate;
     private final QuestionBank questionBank;
-    private static final int MAX_POINTS = 1000;
-    private static final int MIN_POINTS_IF_CORRECT = 100;
+    private final QuizService quizService;
 
-    public GameService(SimpMessagingTemplate messagingTemplate, QuestionBank questionBank) {
+    public GameService(SimpMessagingTemplate messagingTemplate, QuestionBank questionBank, QuizService quizService) {
         this.messagingTemplate = messagingTemplate;
         this.questionBank = questionBank;
+        this.quizService = quizService;
     }
 
-    public Game createGame() {
+    // quizId mag null zijn - dan gebruiken we de demo-vragen uit QuestionBank
+    public Game createGame(String quizId) {
         String gameCode = generateGameCode();
         Game game = new Game(gameCode);
+        game.setQuizId(quizId);
         games.put(gameCode, game);
         return game;
     }
@@ -64,7 +68,7 @@ public class GameService {
         }
 
         int nextIndex = game.getCurrentQuestionIndex() + 1;
-        Question question = questionBank.getQuestion(nextIndex);
+        Question question = getQuestionAt(game, nextIndex);
 
         if (question == null) {
             broadcast(gameCode, "GAME_FINISHED", game.getPlayers());
@@ -73,7 +77,6 @@ public class GameService {
 
         game.startNextQuestion(QUESTION_DURATION_SECONDS);
 
-        // Stuur de veilige vraag (zonder correctAnswer) mét de deadline naar de clients
         QuestionForClient safeQuestion = new QuestionForClient(
                 question.getText(),
                 question.getAnswers(),
@@ -91,7 +94,6 @@ public class GameService {
             return false;
         }
 
-        // Weiger antwoorden die na de deadline binnenkomen
         if (game.isDeadlinePassed()) {
             return false;
         }
@@ -107,7 +109,7 @@ public class GameService {
 
         game.markPlayerAnswered(playerName);
 
-        Question currentQuestion = questionBank.getQuestion(game.getCurrentQuestionIndex());
+        Question currentQuestion = getQuestionAt(game, game.getCurrentQuestionIndex());
         boolean isCorrect = currentQuestion.getCorrectAnswer().equals(answer);
 
         if (isCorrect) {
@@ -119,23 +121,7 @@ public class GameService {
 
         return true;
     }
-    // Hoe sneller geantwoord, hoe meer punten. Lineair van MAX_POINTS (direct)
-    // tot MIN_POINTS_IF_CORRECT (op de valreep), altijd 0 bij een fout antwoord.
-    private int calculatePoints(Game game) {
-        long now = System.currentTimeMillis();
-        long totalDuration = game.getQuestionDeadline() - game.getQuestionStartTime();
-        long timeUsed = now - game.getQuestionStartTime();
 
-        // Zorg dat we nooit buiten de 0-1 range rekenen, ook niet bij afrondingsverschillen
-        double fractionRemaining = 1.0 - ((double) timeUsed / totalDuration);
-        fractionRemaining = Math.max(0.0, Math.min(1.0, fractionRemaining));
-
-        int points = (int) (MAX_POINTS * fractionRemaining);
-        return Math.max(MIN_POINTS_IF_CORRECT, points);
-    }
-
-    // Controleer elke seconde of er vragen zijn waarvan de tijd verstreken is.
-    // @Scheduled laat Spring Boot dit automatisch op de achtergrond uitvoeren.
     @Scheduled(fixedDelay = 1000)
     public void checkDeadlines() {
         for (Map.Entry<String, Game> entry : games.entrySet()) {
@@ -151,15 +137,39 @@ public class GameService {
     private void endQuestion(String gameCode, Game game) {
         game.endQuestion();
 
-        Question question = questionBank.getQuestion(game.getCurrentQuestionIndex());
+        Question question = getQuestionAt(game, game.getCurrentQuestionIndex());
 
-        // Nu de tijd voorbij is, sturen we WEL het correcte antwoord mee
-        // zodat het grote scherm (en de host) het kunnen tonen
         QuestionResult result = new QuestionResult(
                 question.getCorrectAnswer(),
                 game.getPlayers()
         );
         broadcast(gameCode, "QUESTION_ENDED", result);
+    }
+
+    // Haalt een vraag op uit de gekoppelde quiz, of uit de demo-QuestionBank
+    // als het spel geen specifieke quiz heeft.
+    private Question getQuestionAt(Game game, int index) {
+        if (game.getQuizId() == null) {
+            return questionBank.getQuestion(index);
+        }
+
+        Quiz quiz = quizService.getQuiz(game.getQuizId());
+        if (quiz == null || index < 0 || index >= quiz.getQuestions().size()) {
+            return null;
+        }
+        return quiz.getQuestions().get(index);
+    }
+
+    private int calculatePoints(Game game) {
+        long now = System.currentTimeMillis();
+        long totalDuration = game.getQuestionDeadline() - game.getQuestionStartTime();
+        long timeUsed = now - game.getQuestionStartTime();
+
+        double fractionRemaining = 1.0 - ((double) timeUsed / totalDuration);
+        fractionRemaining = Math.max(0.0, Math.min(1.0, fractionRemaining));
+
+        int points = (int) (MAX_POINTS * fractionRemaining);
+        return Math.max(MIN_POINTS_IF_CORRECT, points);
     }
 
     private void broadcast(String gameCode, String eventType, Object payload) {
@@ -173,11 +183,9 @@ public class GameService {
         return String.valueOf(code);
     }
 
-    // Veilige vraagweergave voor clients: geen correctAnswer, wél de deadline
     private record QuestionForClient(String text, List<String> answers, long deadline) {
     }
 
-    // Resultaat na afloop van een vraag: nu wél het correcte antwoord + scores
     private record QuestionResult(String correctAnswer, List<Player> leaderboard) {
     }
 }
