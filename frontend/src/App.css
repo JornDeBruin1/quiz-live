@@ -91,3 +91,19 @@ button {
   text-decoration: none;
   border-radius: 8px;
 }
+
+.timer {
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.timer-warning {
+  color: #ef4444;
+}
+
+.correct-answer {
+  font-size: 32px;
+  font-weight: bold;
+  color: #22c55e;
+}

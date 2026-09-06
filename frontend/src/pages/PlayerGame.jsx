@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import useGameSocket from "../useGameSocket";
+import Timer from "../components/Timer";
+
 
 const API_BASE_URL = "http://localhost:8080/api";
 
 function PlayerGame({ gameCode, playerName }) {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [waitingForNext, setWaitingForNext] = useState(false);
+  const [questionResult, setQuestionResult] = useState(null);
   const [gameFinished, setGameFinished] = useState(false);
   const event = useGameSocket(gameCode);
 
@@ -16,7 +18,11 @@ function PlayerGame({ gameCode, playerName }) {
     if (event.type === "QUESTION_STARTED") {
       setCurrentQuestion(event.payload);
       setSelectedAnswer(null);
-      setWaitingForNext(false);
+      setQuestionResult(null);
+    }
+
+    if (event.type === "QUESTION_ENDED") {
+      setQuestionResult(event.payload);
     }
 
     if (event.type === "GAME_FINISHED") {
@@ -25,10 +31,9 @@ function PlayerGame({ gameCode, playerName }) {
   }, [event]);
 
   async function handleAnswer(answer) {
-    if (selectedAnswer) return;
+    if (selectedAnswer || questionResult) return;
 
     setSelectedAnswer(answer);
-    setWaitingForNext(true);
 
     await fetch(`${API_BASE_URL}/games/${gameCode}/answer`, {
       method: "POST",
@@ -41,7 +46,7 @@ function PlayerGame({ gameCode, playerName }) {
     return (
       <div className="player-game">
         <h1>Quiz afgelopen!</h1>
-        <p>Bedankt voor het meespelen, {playerName}.</p>
+        <p>Bedankt voor het meespelen, {playerName}!</p>
       </div>
     );
   }
@@ -54,16 +59,32 @@ function PlayerGame({ gameCode, playerName }) {
     );
   }
 
-  if (waitingForNext) {
+ if (questionResult) {
+    const wasCorrect = selectedAnswer === questionResult.correctAnswer;
     return (
       <div className="player-game">
-        <p>Antwoord verstuurd! Wachten op de volgende vraag...</p>
+        <p>Correct antwoord: {questionResult.correctAnswer}</p>
+        <p>{wasCorrect ? "Je hebt het goed!" : "Je hebt het fout!"}</p>
+        <p>Wachten op de volgende vraag...</p>
+      </div>
+    );
+  }
+
+  // Zodra er geantwoord is, tonen we de vraag niet meer -
+  // enkel een wachtscherm, zoals bij Kahoot
+  if (selectedAnswer) {
+    return (
+      <div className="player-game">
+        <Timer deadline={currentQuestion.deadline} />
+        <p>Antwoord verstuurd!</p>
+        <p>Wachten op de andere spelers...</p>
       </div>
     );
   }
 
   return (
     <div className="player-game">
+      <Timer deadline={currentQuestion.deadline} />
       <h2>{currentQuestion.text}</h2>
       <div className="answers">
         {currentQuestion.answers.map((answer) => (

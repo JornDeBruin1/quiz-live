@@ -5,14 +5,19 @@ import com.pubquiz.backend.model.GameEvent;
 import com.pubquiz.backend.model.Player;
 import com.pubquiz.backend.model.Question;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 @Service
 public class GameService {
+
+    // Hoe lang een vraag duurt in seconden
+    private static final int QUESTION_DURATION_SECONDS = 20;
 
     private final Map<String, Game> games = new HashMap<>();
     private final SimpMessagingTemplate messagingTemplate;
@@ -60,17 +65,18 @@ public class GameService {
         Question question = questionBank.getQuestion(nextIndex);
 
         if (question == null) {
-            // Geen vragen meer over: het spel is klaar
             broadcast(gameCode, "GAME_FINISHED", game.getPlayers());
             return true;
         }
 
-        game.startNextQuestion();
+        game.startNextQuestion(QUESTION_DURATION_SECONDS);
 
-        // BELANGRIJK: we sturen hier NIET het correctAnswer-veld mee.
-        // We bouwen een "veilige" versie van de vraag, zonder antwoord,
-        // zodat spelers het correcte antwoord niet in het netwerkverkeer kunnen zien.
-        QuestionForClient safeQuestion = new QuestionForClient(question.getText(), question.getAnswers());
+        // Stuur de veilige vraag (zonder correctAnswer) mét de deadline naar de clients
+        QuestionForClient safeQuestion = new QuestionForClient(
+                question.getText(),
+                question.getAnswers(),
+                game.getQuestionDeadline()
+        );
         broadcast(gameCode, "QUESTION_STARTED", safeQuestion);
 
         return true;
@@ -80,6 +86,11 @@ public class GameService {
         Game game = games.get(gameCode);
 
         if (game == null || !game.getGameState().equals("QUESTION_ACTIVE")) {
+            return false;
+        }
+
+        // Weiger antwoorden die na de deadline binnenkomen
+        if (game.isDeadlinePassed()) {
             return false;
         }
 
@@ -101,10 +112,37 @@ public class GameService {
             player.addScore(100);
         }
 
-        // Laat de host/screen weten hoeveel mensen al geantwoord hebben (zonder te verklappen wat ze antwoordden)
         broadcast(gameCode, "ANSWER_SUBMITTED", game);
 
         return true;
+    }
+
+    // Controleer elke seconde of er vragen zijn waarvan de tijd verstreken is.
+    // @Scheduled laat Spring Boot dit automatisch op de achtergrond uitvoeren.
+    @Scheduled(fixedDelay = 1000)
+    public void checkDeadlines() {
+        for (Map.Entry<String, Game> entry : games.entrySet()) {
+            String gameCode = entry.getKey();
+            Game game = entry.getValue();
+
+            if (game.getGameState().equals("QUESTION_ACTIVE") && game.isDeadlinePassed()) {
+                endQuestion(gameCode, game);
+            }
+        }
+    }
+
+    private void endQuestion(String gameCode, Game game) {
+        game.endQuestion();
+
+        Question question = questionBank.getQuestion(game.getCurrentQuestionIndex());
+
+        // Nu de tijd voorbij is, sturen we WEL het correcte antwoord mee
+        // zodat het grote scherm (en de host) het kunnen tonen
+        QuestionResult result = new QuestionResult(
+                question.getCorrectAnswer(),
+                game.getPlayers()
+        );
+        broadcast(gameCode, "QUESTION_ENDED", result);
     }
 
     private void broadcast(String gameCode, String eventType, Object payload) {
@@ -118,8 +156,11 @@ public class GameService {
         return String.valueOf(code);
     }
 
-    // Kleine, "veilige" weergave van een vraag - alleen tekst en antwoordopties,
-    // bewust zonder het correcte antwoord erin.
-    private record QuestionForClient(String text, java.util.List<String> answers) {
+    // Veilige vraagweergave voor clients: geen correctAnswer, wél de deadline
+    private record QuestionForClient(String text, List<String> answers, long deadline) {
+    }
+
+    // Resultaat na afloop van een vraag: nu wél het correcte antwoord + scores
+    private record QuestionResult(String correctAnswer, List<Player> leaderboard) {
     }
 }
