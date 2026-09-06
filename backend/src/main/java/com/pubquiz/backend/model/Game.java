@@ -12,6 +12,7 @@ public class Game {
     private String gameState = "LOBBY";
     private int currentQuestionIndex = -1;
     private long questionDeadline = 0;
+    private long questionStartTime = 0;
 
     // Bijhouden wie er al geantwoord heeft op de huidige vraag,
     // zodat niemand twee keer kan antwoorden
@@ -41,6 +42,10 @@ public class Game {
         return questionDeadline;
     }
 
+    public long getQuestionStartTime() {
+        return questionStartTime;
+    }
+
     public void addPlayer(Player player) {
         players.add(player);
     }
@@ -49,8 +54,8 @@ public class Game {
         currentQuestionIndex++;
         gameState = "QUESTION_ACTIVE";
         playersWhoAnswered.clear();
-        // Sla op wanneer de vraag eindigt: nu + aantal seconden in milliseconden
-        questionDeadline = System.currentTimeMillis() + (durationSeconds * 1000L);
+        questionStartTime = System.currentTimeMillis();
+        questionDeadline = questionStartTime + (durationSeconds * 1000L);
     }
 
     public void endQuestion() {

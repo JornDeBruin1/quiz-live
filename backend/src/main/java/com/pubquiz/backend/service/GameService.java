@@ -22,6 +22,8 @@ public class GameService {
     private final Map<String, Game> games = new HashMap<>();
     private final SimpMessagingTemplate messagingTemplate;
     private final QuestionBank questionBank;
+    private static final int MAX_POINTS = 1000;
+    private static final int MIN_POINTS_IF_CORRECT = 100;
 
     public GameService(SimpMessagingTemplate messagingTemplate, QuestionBank questionBank) {
         this.messagingTemplate = messagingTemplate;
@@ -109,12 +111,27 @@ public class GameService {
         boolean isCorrect = currentQuestion.getCorrectAnswer().equals(answer);
 
         if (isCorrect) {
-            player.addScore(100);
+            int points = calculatePoints(game);
+            player.addScore(points);
         }
 
         broadcast(gameCode, "ANSWER_SUBMITTED", game);
 
         return true;
+    }
+    // Hoe sneller geantwoord, hoe meer punten. Lineair van MAX_POINTS (direct)
+    // tot MIN_POINTS_IF_CORRECT (op de valreep), altijd 0 bij een fout antwoord.
+    private int calculatePoints(Game game) {
+        long now = System.currentTimeMillis();
+        long totalDuration = game.getQuestionDeadline() - game.getQuestionStartTime();
+        long timeUsed = now - game.getQuestionStartTime();
+
+        // Zorg dat we nooit buiten de 0-1 range rekenen, ook niet bij afrondingsverschillen
+        double fractionRemaining = 1.0 - ((double) timeUsed / totalDuration);
+        fractionRemaining = Math.max(0.0, Math.min(1.0, fractionRemaining));
+
+        int points = (int) (MAX_POINTS * fractionRemaining);
+        return Math.max(MIN_POINTS_IF_CORRECT, points);
     }
 
     // Controleer elke seconde of er vragen zijn waarvan de tijd verstreken is.
