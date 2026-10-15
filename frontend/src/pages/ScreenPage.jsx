@@ -1,27 +1,16 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import useGameSocket from "../useGameSocket";
+import useGame from "../hooks/useGame";
 import Timer from "../components/Timer";
 
-const API_BASE_URL = "http://localhost:8080/api";
 
 function ScreenPage() {
   const { gameCode } = useParams();
-  const [game, setGame] = useState(null);
+  const { game, setGame, error } = useGame(gameCode);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [questionResult, setQuestionResult] = useState(null);
   const event = useGameSocket(gameCode);
-
-  // Bij openen: huidige staat ophalen
-  useEffect(() => {
-    async function fetchGame() {
-      const response = await fetch(`${API_BASE_URL}/games/${gameCode}`);
-      if (response.ok) {
-        setGame(await response.json());
-      }
-    }
-    fetchGame();
-  }, [gameCode]);
 
   useEffect(() => {
     if (!event) return;
@@ -43,10 +32,14 @@ function ScreenPage() {
       setCurrentQuestion(null);
       setQuestionResult(null);
     }
-  }, [event]);
+  }, [event, setGame]);
+
+  if (error) {
+    return <p>Spel niet gevonden voor gamecode {gameCode}</p>;
+  }
 
   if (!game) {
-    return <p>Spel niet gevonden voor gamecode {gameCode}</p>;
+    return <p>Laden...</p>;
   }
 
   if (!currentQuestion) {
