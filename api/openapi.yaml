@@ -1,13 +1,17 @@
 openapi: 3.0.3
 info:
   title: PubQuiz API
-  version: 0.1.0
+  version: 0.2.0
+  description: >
+    REST API van het PubQuiz-platform. Live events (QUESTION_STARTED enz.)
+    lopen via WebSocket/STOMP en staan niet in dit contract.
 
 servers:
   - url: http://localhost:8080
 
 tags:
   - name: games
+  - name: quizzes
 
 paths:
   /api/games:
@@ -15,8 +19,15 @@ paths:
       tags: [games]
       operationId: createGame
       summary: Maak een nieuw spel aan
+      requestBody:
+        required: true
+        description: Gebruik {} voor een spel met de demo-vragen
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameRequest'
       responses:
-        '201':
+        '200':
           description: Spel aangemaakt
           content:
             application/json:
@@ -63,6 +74,99 @@ paths:
         '404':
           description: Spel niet gevonden
 
+  /api/games/{code}/next-question:
+    post:
+      tags: [games]
+      operationId: startNextQuestion
+      summary: Host start de volgende vraag
+      parameters:
+        - $ref: '#/components/parameters/GameCode'
+      responses:
+        '200':
+          description: Vraag gestart (of GAME_FINISHED verstuurd als er geen vragen meer zijn)
+        '404':
+          description: Spel niet gevonden
+
+  /api/games/{code}/answer:
+    post:
+      tags: [games]
+      operationId: submitAnswer
+      summary: Speler stuurt een antwoord in
+      parameters:
+        - $ref: '#/components/parameters/GameCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+      responses:
+        '200':
+          description: Antwoord geaccepteerd
+        '400':
+          description: >
+            Antwoord geweigerd (spel bestaat niet, geen actieve vraag,
+            deadline verstreken, speler heeft al geantwoord of speler onbekend)
+
+  /api/quizzes:
+    post:
+      tags: [quizzes]
+      operationId: createQuiz
+      summary: Maak een nieuwe quiz aan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuizRequest'
+      responses:
+        '200':
+          description: Quiz aangemaakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizResponse'
+
+  /api/quizzes/{id}:
+    get:
+      tags: [quizzes]
+      operationId: getQuiz
+      summary: Haal een quiz op
+      parameters:
+        - $ref: '#/components/parameters/QuizId'
+      responses:
+        '200':
+          description: De quiz
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizResponse'
+        '404':
+          description: Quiz niet gevonden
+
+  /api/quizzes/{id}/questions:
+    post:
+      tags: [quizzes]
+      operationId: addQuestion
+      summary: Voeg een vraag toe aan een quiz
+      parameters:
+        - $ref: '#/components/parameters/QuizId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddQuestionRequest'
+      responses:
+        '200':
+          description: Vraag toegevoegd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionResponse'
+        '404':
+          description: Quiz niet gevonden
+
 components:
   parameters:
     GameCode:
@@ -71,31 +175,122 @@ components:
       required: true
       schema:
         type: string
+    QuizId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
 
   schemas:
+    GameState:
+      type: string
+      enum: [LOBBY, QUESTION_ACTIVE, QUESTION_ENDED]
+
+    PlayerResponse:
+      type: object
+      required: [name, score]
+      properties:
+        name:
+          type: string
+        score:
+          type: integer
+
+    GameResponse:
+      type: object
+      required: [gameCode, players, gameState, currentQuestionIndex, questionDeadline, questionStartTime]
+      properties:
+        gameCode:
+          type: string
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerResponse'
+        gameState:
+          $ref: '#/components/schemas/GameState'
+        currentQuestionIndex:
+          type: integer
+          description: -1 zolang er nog geen vraag is gestart
+        questionDeadline:
+          type: integer
+          format: int64
+          description: Eindtijd van de huidige vraag in Unix-milliseconden (0 = nog niet gestart)
+        questionStartTime:
+          type: integer
+          format: int64
+          description: Starttijd van de huidige vraag in Unix-milliseconden (0 = nog niet gestart)
+        quizId:
+          type: string
+          nullable: true
+          description: Gekoppelde quiz; leeg betekent de demo-vragen
+
+    CreateGameRequest:
+      type: object
+      properties:
+        quizId:
+          type: string
+          nullable: true
+
     JoinGameRequest:
       type: object
       required: [name]
       properties:
         name:
           type: string
-          minLength: 1
-          maxLength: 30
 
-    PlayerResponse:
+    AnswerRequest:
       type: object
-      required: [id, name, score]
+      required: [playerName, answer]
       properties:
-        id: { type: string }
-        name: { type: string }
-        score: { type: integer }
+        playerName:
+          type: string
+        answer:
+          type: string
 
-    GameResponse:
+    QuestionResponse:
       type: object
-      required: [code, players]
+      required: [id, text, answers, correctAnswer]
       properties:
-        code: { type: string }
-        players:
+        id:
+          type: string
+        text:
+          type: string
+        answers:
           type: array
           items:
-            $ref: '#/components/schemas/PlayerResponse'
+            type: string
+        correctAnswer:
+          type: string
+
+    QuizResponse:
+      type: object
+      required: [id, title, questions]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionResponse'
+
+    CreateQuizRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+
+    AddQuestionRequest:
+      type: object
+      required: [text, answers, correctAnswer]
+      properties:
+        text:
+          type: string
+        answers:
+          type: array
+          items:
+            type: string
+        correctAnswer:
+          type: string
