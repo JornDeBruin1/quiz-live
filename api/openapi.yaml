@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: PubQuiz API
+  version: 0.1.0
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: games
+
+paths:
+  /api/games:
+    post:
+      tags: [games]
+      operationId: createGame
+      summary: Maak een nieuw spel aan
+      responses:
+        '201':
+          description: Spel aangemaakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameResponse'
+
+  /api/games/{code}:
+    get:
+      tags: [games]
+      operationId: getGame
+      summary: Haal de huidige staat van een spel op
+      parameters:
+        - $ref: '#/components/parameters/GameCode'
+      responses:
+        '200':
+          description: Het spel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameResponse'
+        '404':
+          description: Spel niet gevonden
+
+  /api/games/{code}/players:
+    post:
+      tags: [games]
+      operationId: joinGame
+      summary: Speler doet mee aan een spel
+      parameters:
+        - $ref: '#/components/parameters/GameCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinGameRequest'
+      responses:
+        '200':
+          description: Speler toegevoegd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerResponse'
+        '404':
+          description: Spel niet gevonden
+
+components:
+  parameters:
+    GameCode:
+      name: code
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    JoinGameRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 30
+
+    PlayerResponse:
+      type: object
+      required: [id, name, score]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        score: { type: integer }
+
+    GameResponse:
+      type: object
+      required: [code, players]
+      properties:
+        code: { type: string }
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerResponse'
