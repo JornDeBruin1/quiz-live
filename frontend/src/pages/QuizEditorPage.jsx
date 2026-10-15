@@ -1,63 +1,23 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API_BASE_URL = "http://localhost:8080/api";
-
-function emptyQuestion() {
-  return { text: "", answers: ["", "", "", ""], correctAnswer: "" };
-}
+import useQuizEditor from "../hooks/useQuizEditor";
 
 function QuizEditorPage() {
-  const [title, setTitle] = useState("");
-  const [questions, setQuestions] = useState([emptyQuestion()]);
   const navigate = useNavigate();
-
-  function updateQuestionText(index, text) {
-    const updated = [...questions];
-    updated[index].text = text;
-    setQuestions(updated);
-  }
-
-  function updateAnswer(questionIndex, answerIndex, value) {
-    const updated = [...questions];
-    updated[questionIndex].answers[answerIndex] = value;
-    setQuestions(updated);
-  }
-
-  function updateCorrectAnswer(questionIndex, value) {
-    const updated = [...questions];
-    updated[questionIndex].correctAnswer = value;
-    setQuestions(updated);
-  }
-
-  function addQuestion() {
-    setQuestions([...questions, emptyQuestion()]);
-  }
-
-  function removeQuestion(index) {
-    setQuestions(questions.filter((_, i) => i !== index));
-  }
+  const {
+    title,
+    setTitle,
+    questions,
+    updateQuestionText,
+    updateAnswer,
+    updateCorrectAnswer,
+    addNewQuestion,
+    removeQuestion,
+    save,
+  } = useQuizEditor();
 
   async function handleSave() {
-    // Eerst de quiz zelf aanmaken, dan pas kunnen we vragen toevoegen
-    // (de backend moet immers eerst een quizId teruggeven)
-    const quizResponse = await fetch(`${API_BASE_URL}/quizzes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
-    });
-    const quiz = await quizResponse.json();
-
-    // Elke vraag apart versturen naar de zojuist aangemaakte quiz
-    for (const question of questions) {
-      await fetch(`${API_BASE_URL}/quizzes/${quiz.id}/questions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(question),
-      });
-    }
-
-    navigate(`/host?quizId=${quiz.id}`);
+    const quizId = await save();
+    navigate(`/host?quizId=${quizId}`);
   }
 
   return (
@@ -114,7 +74,7 @@ function QuizEditorPage() {
         </div>
       ))}
 
-      <button onClick={addQuestion}>+ Vraag toevoegen</button>
+      <button onClick={addNewQuestion}>+ Vraag toevoegen</button>
       <button onClick={handleSave}>Quiz opslaan en spel starten</button>
     </div>
   );

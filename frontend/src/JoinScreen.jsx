@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { joinGame } from "./api";
+import { joinGame } from "./api/gameApi";
 
 function JoinScreen({ onJoined }) {
   const [gameCode, setGameCode] = useState("");

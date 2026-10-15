@@ -1,15 +1,14 @@
-import { useState, useEffect } from "react";
 import useGameSocket from "../useGameSocket";
+import { submitAnswer } from "../api/gameApi";
 import Timer from "../components/Timer";
 
-
-const API_BASE_URL = "http://localhost:8080/api";
 
 function PlayerGame({ gameCode, playerName }) {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [questionResult, setQuestionResult] = useState(null);
   const [gameFinished, setGameFinished] = useState(false);
+  const [answerFailed, setAnswerFailed] = useState(false);
   const event = useGameSocket(gameCode);
 
   useEffect(() => {
@@ -30,17 +29,21 @@ function PlayerGame({ gameCode, playerName }) {
     }
   }, [event]);
 
-  async function handleAnswer(answer) {
-    if (selectedAnswer || questionResult) return;
+async function handleAnswer(answer) {
+  if (selectedAnswer || questionResult) return;
 
-    setSelectedAnswer(answer);
+  setSelectedAnswer(answer);
+  setAnswerFailed(false);
 
-    await fetch(`${API_BASE_URL}/games/${gameCode}/answer`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerName, answer }),
-    });
+  try {
+    await submitAnswer(gameCode, playerName, answer);
+  } catch (error) {
+    // De server weigert bijvoorbeeld een antwoord na de deadline,
+    // of de verbinding is weg. Zo weet de speler dat het niet telde.
+    console.error("Antwoord versturen mislukt:", error);
+    setAnswerFailed(true);
   }
+}
 
   if (gameFinished) {
     return (
@@ -75,16 +78,21 @@ function PlayerGame({ gameCode, playerName }) {
 
   // Zodra er geantwoord is, tonen we de vraag niet meer -
   // enkel een wachtscherm, zoals bij Kahoot
-  if (selectedAnswer) {
-    return (
-      <div className="player-game">
-        <Timer deadline={currentQuestion.deadline} />
-        <p>Antwoord verstuurd!</p>
-        <p>Wachten op de andere spelers...</p>
-      </div>
-    );
-  }
-
+if (selectedAnswer) {
+  return (
+    <div className="player-game">
+      <Timer deadline={currentQuestion.deadline} />
+      {answerFailed ? (
+        <p>Je antwoord is niet geteld.</p>
+      ) : (
+        <>
+          <p>Antwoord verstuurd!</p>
+          <p>Wachten op de andere spelers...</p>
+        </>
+      )}
+    </div>
+  );
+}
   return (
     <div className="player-game">
       <Timer deadline={currentQuestion.deadline} />
