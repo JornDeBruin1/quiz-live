@@ -1,57 +1,57 @@
 package com.pubquiz.backend.controller;
 
+import com.pubquiz.backend.api.QuizzesApi;
+import com.pubquiz.backend.api.model.AddQuestionRequest;
+import com.pubquiz.backend.api.model.CreateQuizRequest;
+import com.pubquiz.backend.api.model.QuestionResponse;
+import com.pubquiz.backend.api.model.QuizResponse;
+import com.pubquiz.backend.mapper.QuizMapper;
 import com.pubquiz.backend.model.Question;
 import com.pubquiz.backend.model.Quiz;
 import com.pubquiz.backend.service.QuizService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/quizzes")
-public class QuizController {
+public class QuizController implements QuizzesApi {
 
     private final QuizService quizService;
+    private final QuizMapper quizMapper;
 
-    public QuizController(QuizService quizService) {
+    public QuizController(QuizService quizService, QuizMapper quizMapper) {
         this.quizService = quizService;
+        this.quizMapper = quizMapper;
     }
 
-    @PostMapping
-    public Quiz createQuiz(@RequestBody CreateQuizRequest request) {
-        return quizService.createQuiz(request.title());
+    @Override
+    public ResponseEntity<QuizResponse> createQuiz(CreateQuizRequest createQuizRequest) {
+        Quiz quiz = quizService.createQuiz(createQuizRequest.getTitle());
+        return ResponseEntity.ok(quizMapper.toQuizResponse(quiz));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Quiz> getQuiz(@PathVariable String id) {
+    @Override
+    public ResponseEntity<QuizResponse> getQuiz(String id) {
         Quiz quiz = quizService.getQuiz(id);
 
         if (quiz == null) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(quiz);
+        return ResponseEntity.ok(quizMapper.toQuizResponse(quiz));
     }
 
-    @PostMapping("/{id}/questions")
-    public ResponseEntity<Question> addQuestion(
-            @PathVariable String id,
-            @RequestBody AddQuestionRequest request) {
-
+    @Override
+    public ResponseEntity<QuestionResponse> addQuestion(String id, AddQuestionRequest addQuestionRequest) {
         Question question = quizService.addQuestion(
-                id, request.text(), request.answers(), request.correctAnswer());
+                id,
+                addQuestionRequest.getText(),
+                addQuestionRequest.getAnswers(),
+                addQuestionRequest.getCorrectAnswer());
 
         if (question == null) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(question);
-    }
-
-    public record CreateQuizRequest(String title) {
-    }
-
-    public record AddQuestionRequest(String text, List<String> answers, String correctAnswer) {
+        return ResponseEntity.ok(quizMapper.toQuestionResponse(question));
     }
 }
