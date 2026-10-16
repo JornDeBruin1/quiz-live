@@ -1,7 +1,8 @@
 import { useParams } from "react-router-dom";
 import useScreenState from "../hooks/useScreenState";
-import Timer from "../components/Timer";
-
+import LobbyView from "../components/LobbyView";
+import QuestionView from "../components/QuestionView";
+import ResultView from "../components/ResultView";
 
 function ScreenPage() {
   const { gameCode } = useParams();
@@ -17,51 +18,14 @@ function ScreenPage() {
   }
 
   if (!currentQuestion) {
-    return (
-      <div className="screen-page">
-        <h1>PubQuiz</h1>
-        <p>Gamecode: {gameCode}</p>
-        <h2>Spelers ({game.players.length})</h2>
-        <ul>
-          {game.players.map((player) => (
-            <li key={player.name}>{player.name}</li>
-          ))}
-        </ul>
-      </div>
-    );
+    return <LobbyView gameCode={gameCode} players={game.players} />;
   }
 
   if (questionResult) {
-    return (
-      <div className="screen-page">
-        <h2>Correct antwoord:</h2>
-        <p className="correct-answer">{questionResult.correctAnswer}</p>
-        <h3>Stand:</h3>
-        <ol>
-          {questionResult.leaderboard
-            .slice()
-            .sort((a, b) => b.score - a.score)
-            .map((player) => (
-              <li key={player.name}>
-                {player.name} — {player.score} punten
-              </li>
-            ))}
-        </ol>
-      </div>
-    );
+    return <ResultView questionResult={questionResult} />;
   }
 
-  return (
-    <div className="screen-page">
-      <Timer deadline={currentQuestion.deadline} />
-      <h2>{currentQuestion.text}</h2>
-      <ul className="answer-list">
-        {currentQuestion.answers.map((answer) => (
-          <li key={answer}>{answer}</li>
-        ))}
-      </ul>
-    </div>
-  );
+  return <QuestionView currentQuestion={currentQuestion} />;
 }
 
 export default ScreenPage;
