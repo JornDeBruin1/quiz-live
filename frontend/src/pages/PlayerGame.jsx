@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import useGameSocket from "../useGameSocket";
 import { submitAnswer } from "../api/gameApi";
 import Timer from "../components/Timer";
