@@ -7,6 +7,7 @@ import QuizEditorPage from "./pages/QuizEditorPage";
 import Login from "./pages/Login";
 import Register from "./pages/register";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MyQuizzesPage from "./pages/MyQuizzesPage";
 import "./App.css";
 
 function App() {
@@ -21,8 +22,7 @@ function App() {
           <Route path="/player" element={<PlayerPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          
-          
+          <Route path="/my-quizzes" element={<ProtectedRoute><MyQuizzesPage /></ProtectedRoute>} />
         </Routes>
       </div>
     </BrowserRouter>

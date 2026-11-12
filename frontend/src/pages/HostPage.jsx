@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import useGameSocket from "../useGameSocket";
 import { createGame, startNextQuestion } from "../api/gameApi";
+import LogoutButton from "../components/LogoutButton";
 
 
 function HostPage() {
@@ -50,6 +51,7 @@ function HostPage() {
   return (
     <div className="host-page">
       <h1>Host</h1>
+      <LogoutButton />
       <p className="game-code">Gamecode: {game.gameCode}</p>
       <h2>Spelers ({game.players.length})</h2>
       <ul>

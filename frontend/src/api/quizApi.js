@@ -10,3 +10,7 @@ export function addQuestion(quizId, { text, answers, correctAnswer }) {
     body: { text, answers, correctAnswer },
   });
 }
+
+export function listMyQuizzes() {
+  return request("/quizzes");
+}

@@ -9,6 +9,8 @@ function HomePage() {
         <Link to="/quiz-editor">Quiz maken</Link>
         <Link to="/screen/908528">Screen (test)</Link>
         <Link to="/player">Player</Link>
+        <Link to="/my-quizzes">Mijn quizzen</Link>
+        <Link to="/login">Login</Link>
       </nav>
     </div>
   );
