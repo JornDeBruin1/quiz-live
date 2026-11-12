@@ -2,38 +2,45 @@ package com.pubquiz.backend.service;
 
 import com.pubquiz.backend.model.Question;
 import com.pubquiz.backend.model.Quiz;
+import com.pubquiz.backend.repository.QuizRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class QuizService {
 
-    private final Map<String, Quiz> quizzes = new HashMap<>();
+    private final QuizRepository quizRepository;
+
+    public QuizService(QuizRepository quizRepository) {
+        this.quizRepository = quizRepository;
+    }
 
     public Quiz createQuiz(String title) {
-        String id = UUID.randomUUID().toString();
-        Quiz quiz = new Quiz(id, title);
-        quizzes.put(id, quiz);
-        return quiz;
+        Quiz quiz = new Quiz(UUID.randomUUID().toString(), title);
+        return quizRepository.save(quiz);
     }
 
+    // findById geeft een Optional; met orElse(null) blijft de service zich
+    // gedragen als eerst, dus de controller hoeft niet te veranderen
     public Quiz getQuiz(String id) {
-        return quizzes.get(id);
+        return quizRepository.findById(id).orElse(null);
     }
 
-    public Question addQuestion(String quizId, String text, java.util.List<String> answers, String correctAnswer) {
-        Quiz quiz = quizzes.get(quizId);
+    // @Transactional: ophalen en opslaan gebeuren in één database-transactie
+    @Transactional
+    public Question addQuestion(String quizId, String text, List<String> answers, String correctAnswer) {
+        Quiz quiz = quizRepository.findById(quizId).orElse(null);
 
         if (quiz == null) {
             return null;
         }
 
-        String questionId = UUID.randomUUID().toString();
-        Question question = new Question(questionId, text, answers, correctAnswer);
+        Question question = new Question(UUID.randomUUID().toString(), text, answers, correctAnswer);
         quiz.addQuestion(question);
+        quizRepository.save(quiz);
         return question;
     }
 }

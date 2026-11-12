@@ -1,13 +1,34 @@
 package com.pubquiz.backend.model;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+
 import java.util.ArrayList;
 import java.util.List;
+import jakarta.persistence.FetchType;
 
+@Entity
 public class Quiz {
 
+    @Id
     private String id;
     private String title;
+
+    // quiz_id in de question-tabel is de foreign key; position bewaart de volgorde.
+    // cascade ALL: vragen worden automatisch mee opgeslagen en verwijderd met de quiz.
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "quiz_id")
+    @OrderColumn(name = "position")
     private List<Question> questions = new ArrayList<>();
+
+    // Verplicht voor JPA, wij gebruiken hem zelf niet
+    protected Quiz() {
+    }
 
     public Quiz(String id, String title) {
         this.id = id;
