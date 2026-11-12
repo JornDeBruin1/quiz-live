@@ -12,6 +12,7 @@ servers:
 tags:
   - name: games
   - name: quizzes
+  - name: auth
 
 paths:
   /api/games:
@@ -33,6 +34,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GameResponse'
+        '403':
+          description: Dit onderdeel is van een andere host
 
   /api/games/{code}:
     get:
@@ -86,6 +89,8 @@ paths:
           description: Vraag gestart (of GAME_FINISHED verstuurd als er geen vragen meer zijn)
         '404':
           description: Spel niet gevonden
+        '403':
+          description: Dit onderdeel is van een andere host
 
   /api/games/{code}/answer:
     post:
@@ -109,23 +114,38 @@ paths:
             deadline verstreken, speler heeft al geantwoord of speler onbekend)
 
   /api/quizzes:
-    post:
-      tags: [quizzes]
-      operationId: createQuiz
-      summary: Maak een nieuwe quiz aan
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateQuizRequest'
-      responses:
-        '200':
-          description: Quiz aangemaakt
+      post:
+        tags: [quizzes]
+        operationId: createQuiz
+        summary: Maak een nieuwe quiz aan
+        requestBody:
+          required: true
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/QuizResponse'
+                $ref: '#/components/schemas/CreateQuizRequest'
+        responses:
+          '200':
+            description: Quiz aangemaakt
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/QuizResponse'
+      get:
+        tags: [quizzes]
+        operationId: listMyQuizzes
+        summary: Haal de quizzen van de ingelogde host op
+        responses:
+          '200':
+            description: De quizzen van de host
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/QuizResponse'
+          '401':
+            description: Niet ingelogd
 
   /api/quizzes/{id}:
     get:
@@ -143,6 +163,8 @@ paths:
                 $ref: '#/components/schemas/QuizResponse'
         '404':
           description: Quiz niet gevonden
+        '403':
+          description: Dit onderdeel is van een andere host
 
   /api/quizzes/{id}/questions:
     post:
@@ -166,6 +188,8 @@ paths:
                 $ref: '#/components/schemas/QuestionResponse'
         '404':
           description: Quiz niet gevonden
+        '403':
+          description: Dit onderdeel is van een andere host
   /api/auth/register:
     post:
       tags: [auth]

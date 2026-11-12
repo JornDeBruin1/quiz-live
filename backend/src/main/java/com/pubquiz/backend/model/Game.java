@@ -33,6 +33,7 @@ public class Game {
     private long questionDeadline = 0;
     private long questionStartTime = 0;
     private String quizId;
+    private String ownerId;
 
     // Bijhouden wie er al geantwoord heeft op de huidige vraag,
     // zodat niemand twee keer kan antwoorden
@@ -45,8 +46,17 @@ public class Game {
     protected Game() {
     }
 
-    public Game(String gameCode) {
+    public Game(String gameCode, String ownerId) {
         this.gameCode = gameCode;
+        this.ownerId = ownerId;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public boolean isOwnedBy(String hostId) {
+        return ownerId != null && ownerId.equals(hostId);
     }
 
     public String getGameCode() {

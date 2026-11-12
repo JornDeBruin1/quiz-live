@@ -1,5 +1,6 @@
 package com.pubquiz.backend.service;
 
+import com.pubquiz.backend.exception.ForbiddenException;
 import com.pubquiz.backend.model.Game;
 import com.pubquiz.backend.model.GameEvent;
 import com.pubquiz.backend.model.Player;
@@ -35,8 +36,12 @@ public class GameService {
     }
 
     // quizId mag null zijn - dan gebruiken we de demo-vragen uit QuestionBank
-    public Game createGame(String quizId) {
-        Game game = new Game(generateGameCode());
+    public Game createGame(String quizId, String hostId) {
+        if (quizId != null) {
+            // gooit ForbiddenException als de quiz van een andere host is
+            quizService.getOwnedQuiz(quizId, hostId);
+        }
+        Game game = new Game(generateGameCode(), hostId);
         game.setQuizId(quizId);
         return gameRepository.save(game);
     }
@@ -64,11 +69,14 @@ public class GameService {
     }
 
     @Transactional
-    public boolean startNextQuestion(String gameCode) {
+    public boolean startNextQuestion(String gameCode, String hostId) {
         Game game = gameRepository.findForUpdate(gameCode).orElse(null);
 
         if (game == null) {
             return false;
+        }
+        if (!game.isOwnedBy(hostId)) {
+            throw new ForbiddenException();
         }
 
         int nextIndex = game.getCurrentQuestionIndex() + 1;

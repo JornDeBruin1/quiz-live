@@ -17,6 +17,7 @@ public class Quiz {
     @Id
     private String id;
     private String title;
+    private String ownerId;
 
     // quiz_id in de question-tabel is de foreign key; position bewaart de volgorde.
     // cascade ALL: vragen worden automatisch mee opgeslagen en verwijderd met de quiz.
@@ -29,9 +30,18 @@ public class Quiz {
     protected Quiz() {
     }
 
-    public Quiz(String id, String title) {
+    public Quiz(String id, String title, String ownerId) {
         this.id = id;
         this.title = title;
+        this.ownerId = ownerId;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public boolean isOwnedBy(String hostId) {
+        return ownerId != null && ownerId.equals(hostId);
     }
 
     public String getId() {
@@ -49,4 +59,5 @@ public class Quiz {
     public void addQuestion(Question question) {
         questions.add(question);
     }
+    
 }

@@ -18,4 +18,9 @@ public class ApiExceptionHandler {
     public ResponseEntity<Void> invalidCredentials() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Void> forbidden() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    }
 }

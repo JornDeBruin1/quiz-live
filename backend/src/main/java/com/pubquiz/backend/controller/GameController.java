@@ -6,6 +6,7 @@ import com.pubquiz.backend.api.model.CreateGameRequest;
 import com.pubquiz.backend.api.model.GameResponse;
 import com.pubquiz.backend.api.model.JoinGameRequest;
 import com.pubquiz.backend.api.model.PlayerResponse;
+import com.pubquiz.backend.config.CurrentHost;
 import com.pubquiz.backend.mapper.GameMapper;
 import com.pubquiz.backend.model.Game;
 import com.pubquiz.backend.model.Player;
@@ -18,15 +19,17 @@ public class GameController implements GamesApi {
 
     private final GameService gameService;
     private final GameMapper gameMapper;
+    private final CurrentHost currentHost;
 
-    public GameController(GameService gameService, GameMapper gameMapper) {
+    public GameController(GameService gameService, GameMapper gameMapper, CurrentHost currentHost) {
         this.gameService = gameService;
         this.gameMapper = gameMapper;
+        this.currentHost = currentHost;
     }
 
     @Override
     public ResponseEntity<GameResponse> createGame(CreateGameRequest createGameRequest) {
-        Game game = gameService.createGame(createGameRequest.getQuizId());
+        Game game = gameService.createGame(createGameRequest.getQuizId(), currentHost.id());
         return ResponseEntity.ok(gameMapper.toGameResponse(game));
     }
 
@@ -55,7 +58,7 @@ public class GameController implements GamesApi {
     // De host roept dit aan om de volgende vraag te starten
     @Override
     public ResponseEntity<Void> startNextQuestion(String code) {
-        boolean success = gameService.startNextQuestion(code);
+        boolean success = gameService.startNextQuestion(code, currentHost.id());
 
         if (!success) {
             return ResponseEntity.notFound().build();
