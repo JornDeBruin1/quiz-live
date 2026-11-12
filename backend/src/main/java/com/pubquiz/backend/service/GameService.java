@@ -5,13 +5,13 @@ import com.pubquiz.backend.model.GameEvent;
 import com.pubquiz.backend.model.Player;
 import com.pubquiz.backend.model.Question;
 import com.pubquiz.backend.model.Quiz;
+import com.pubquiz.backend.repository.GameRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -21,12 +21,14 @@ public class GameService {
     private static final int MAX_POINTS = 1000;
     private static final int MIN_POINTS_IF_CORRECT = 100;
 
-    private final Map<String, Game> games = new HashMap<>();
+    private final GameRepository gameRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final QuestionBank questionBank;
     private final QuizService quizService;
 
-    public GameService(SimpMessagingTemplate messagingTemplate, QuestionBank questionBank, QuizService quizService) {
+    public GameService(GameRepository gameRepository, SimpMessagingTemplate messagingTemplate,
+                       QuestionBank questionBank, QuizService quizService) {
+        this.gameRepository = gameRepository;
         this.messagingTemplate = messagingTemplate;
         this.questionBank = questionBank;
         this.quizService = quizService;
@@ -34,19 +36,20 @@ public class GameService {
 
     // quizId mag null zijn - dan gebruiken we de demo-vragen uit QuestionBank
     public Game createGame(String quizId) {
-        String gameCode = generateGameCode();
-        Game game = new Game(gameCode);
+        Game game = new Game(generateGameCode());
         game.setQuizId(quizId);
-        games.put(gameCode, game);
-        return game;
+        return gameRepository.save(game);
     }
 
     public Game getGame(String gameCode) {
-        return games.get(gameCode);
+        return gameRepository.findById(gameCode).orElse(null);
     }
 
+    // Vanaf hier: eerst vergrendelen (findForUpdate), dan wijzigen. De wijzigingen worden
+    // aan het einde van de transactie vanzelf opgeslagen, een aparte save() is niet nodig.
+    @Transactional
     public Player addPlayer(String gameCode, String playerName) {
-        Game game = games.get(gameCode);
+        Game game = gameRepository.findForUpdate(gameCode).orElse(null);
 
         if (game == null) {
             return null;
@@ -60,8 +63,9 @@ public class GameService {
         return player;
     }
 
+    @Transactional
     public boolean startNextQuestion(String gameCode) {
-        Game game = games.get(gameCode);
+        Game game = gameRepository.findForUpdate(gameCode).orElse(null);
 
         if (game == null) {
             return false;
@@ -87,8 +91,9 @@ public class GameService {
         return true;
     }
 
+    @Transactional
     public boolean submitAnswer(String gameCode, String playerName, String answer) {
-        Game game = games.get(gameCode);
+        Game game = gameRepository.findForUpdate(gameCode).orElse(null);
 
         if (game == null || !game.getGameState().equals("QUESTION_ACTIVE")) {
             return false;
@@ -122,14 +127,15 @@ public class GameService {
         return true;
     }
 
+    // De timer draait elke seconde en zoekt actieve spellen waarvan de tijd om is.
     @Scheduled(fixedDelay = 1000)
+    @Transactional
     public void checkDeadlines() {
-        for (Map.Entry<String, Game> entry : games.entrySet()) {
-            String gameCode = entry.getKey();
-            Game game = entry.getValue();
+        List<Game> activeGames = gameRepository.findByGameState("QUESTION_ACTIVE");
 
-            if (game.getGameState().equals("QUESTION_ACTIVE") && game.isDeadlinePassed()) {
-                endQuestion(gameCode, game);
+        for (Game game : activeGames) {
+            if (game.isDeadlinePassed()) {
+                endQuestion(game.getGameCode(), game);
             }
         }
     }
@@ -177,10 +183,17 @@ public class GameService {
         messagingTemplate.convertAndSend("/topic/game/" + gameCode, event);
     }
 
+    // Een gamecode is de primary key. Een dubbele code zou een bestaand spel
+    // overschrijven, dus we kiezen opnieuw zolang de code al in de database staat.
     private String generateGameCode() {
         Random random = new Random();
-        int code = 100000 + random.nextInt(900000);
-        return String.valueOf(code);
+        String code;
+
+        do {
+            code = String.valueOf(100000 + random.nextInt(900000));
+        } while (gameRepository.existsById(code));
+
+        return code;
     }
 
     private record QuestionForClient(String text, List<String> answers, long deadline) {

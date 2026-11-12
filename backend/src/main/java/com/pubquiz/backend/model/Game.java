@@ -1,24 +1,49 @@
 package com.pubquiz.backend.model;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Entity
 public class Game {
 
+    @Id
     private String gameCode;
+
+    // game_code in de player-tabel is de foreign key; position bewaart de joinvolgorde
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "game_code")
+    @OrderColumn(name = "position")
     private List<Player> players = new ArrayList<>();
+
     private String gameState = "LOBBY";
     private int currentQuestionIndex = -1;
     private long questionDeadline = 0;
     private long questionStartTime = 0;
     private String quizId;
 
-
     // Bijhouden wie er al geantwoord heeft op de huidige vraag,
     // zodat niemand twee keer kan antwoorden
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "game_answered_players", joinColumns = @JoinColumn(name = "game_code"))
+    @Column(name = "player_name")
     private Set<String> playersWhoAnswered = new HashSet<>();
+
+    // Verplicht voor JPA, wij gebruiken hem zelf niet
+    protected Game() {
+    }
 
     public Game(String gameCode) {
         this.gameCode = gameCode;
