@@ -1,11 +1,10 @@
 package com.pubquiz.backend.service;
 
+import com.pubquiz.backend.exception.InvalidCredentialsException;
 import com.pubquiz.backend.model.Host;
 import com.pubquiz.backend.repository.HostRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class LoginService {
@@ -24,12 +23,10 @@ public class LoginService {
 
     public String login(String username, String password) {
         Host host = hostRepository.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED, "Onjuiste gebruikersnaam of wachtwoord"));
+                .orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoder.matches(password, host.getPasswordHash())) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED, "Onjuiste gebruikersnaam of wachtwoord");
+            throw new InvalidCredentialsException();
         }
         return jwtService.createToken(host.getId(), host.getUsername());
     }

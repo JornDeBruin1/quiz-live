@@ -1,13 +1,12 @@
 package com.pubquiz.backend.service;
 
+import com.pubquiz.backend.exception.UsernameTakenException;
 import com.pubquiz.backend.model.Host;
 import com.pubquiz.backend.repository.HostRepository;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class RegistrationService {
@@ -23,15 +22,15 @@ public class RegistrationService {
     @Transactional
     public Host register(String username, String password) {
         if (hostRepository.existsByUsername(username)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Gebruikersnaam is al in gebruik");
+            throw new UsernameTakenException();
         }
 
         String hash = passwordEncoder.encode(password);
         Host host = new Host(null, username, hash);
         try {
-            return hostRepository.save(host);
+            return hostRepository.saveAndFlush(host);
         } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Gebruikersnaam is al in gebruik");
+            throw new UsernameTakenException();
         }
     }
 }
