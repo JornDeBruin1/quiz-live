@@ -2,6 +2,7 @@ package com.pubquiz.backend.service;
 
 import com.pubquiz.backend.exception.ForbiddenException;
 import com.pubquiz.backend.exception.InvalidGameStateException;
+import com.pubquiz.backend.exception.QuizNotFoundException;
 import com.pubquiz.backend.model.Game;
 import com.pubquiz.backend.model.GameEvent;
 import com.pubquiz.backend.model.Player;
@@ -39,8 +40,10 @@ public class GameService {
     // quizId mag null zijn - dan gebruiken we de demo-vragen uit QuestionBank
     public Game createGame(String quizId, String hostId) {
         if (quizId != null) {
-            // gooit ForbiddenException als de quiz van een andere host is
-            quizService.getOwnedQuiz(quizId, hostId);
+            Quiz quiz = quizService.getOwnedQuiz(quizId, hostId);
+            if (quiz == null) {
+                throw new QuizNotFoundException();        
+            }
         }
         Game game = new Game(generateGameCode(), hostId);
         game.setQuizId(quizId);

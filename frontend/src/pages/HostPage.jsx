@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import useGameSocket from "../useGameSocket";
 import { createGame, startNextQuestion } from "../api/gameApi";
+import { describeGameError } from "../api/GameErrors";
 import LogoutButton from "../components/LogoutButton";
 
 
@@ -13,6 +14,9 @@ function HostPage() {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   // true zolang een vraag loopt; dan mag de host niet doorklikken
   const [questionActive, setQuestionActive] = useState(false);
+  // true zolang een request onderweg is; voorkomt dubbel klikken
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
   const event = useGameSocket(game?.gameCode);
 
   useEffect(() => {
@@ -37,13 +41,29 @@ function HostPage() {
     }
   }, [event]);
 
-  async function handleCreateGame() {
-    const newGame = await createGame(quizId);
-    setGame(newGame);
+  // Voert een actie uit met bezig-status en foutafhandeling, zodat elke knop
+  // dit niet apart hoeft te doen. Een 401 wordt al afgehandeld in client.js
+  // (doorsturen naar /login), de melding hieronder is dan alleen een vangnet.
+  async function runAction(action) {
+    setError(null);
+    setBusy(true);
+    try {
+      await action();
+    } catch (err) {
+      setError(describeGameError(err));
+    } finally {
+      setBusy(false);
+    }
   }
 
-  async function handleNextQuestion() {
-    await startNextQuestion(game.gameCode);
+  function handleCreateGame() {
+    return runAction(async () => {
+      setGame(await createGame(quizId));
+    });
+  }
+
+  function handleNextQuestion() {
+    return runAction(() => startNextQuestion(game.gameCode));
   }
 
   if (!game) {
@@ -51,7 +71,10 @@ function HostPage() {
       <div className="host-page">
         <h1>Host</h1>
         {quizId ? <p>Quiz geladen, klaar om te starten.</p> : <p>Demo-quiz wordt gebruikt.</p>}
-        <button onClick={handleCreateGame}>Nieuw spel starten</button>
+        <button onClick={handleCreateGame} disabled={busy}>
+          {busy ? "Bezig..." : "Nieuw spel starten"}
+        </button>
+        {error && <p className="error" role="alert">{error}</p>}
       </div>
     );
   }
@@ -77,9 +100,10 @@ function HostPage() {
         </div>
       )}
 
-      <button onClick={handleNextQuestion} disabled={questionActive}>
+      <button onClick={handleNextQuestion} disabled={questionActive || busy}>
         {questionActive ? "Vraag loopt..." : "Volgende vraag"}
       </button>
+      {error && <p className="error" role="alert">{error}</p>}
     </div>
   );
 }

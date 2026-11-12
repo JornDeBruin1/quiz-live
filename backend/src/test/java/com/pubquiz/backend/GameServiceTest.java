@@ -1,4 +1,4 @@
-package com.pubquiz.backend.service;
+package com.pubquiz.backend;
 
 import com.pubquiz.backend.exception.ForbiddenException;
 import com.pubquiz.backend.exception.InvalidGameStateException;
@@ -7,6 +7,7 @@ import com.pubquiz.backend.model.GameEvent;
 import com.pubquiz.backend.repository.GameRepository;
 import com.pubquiz.backend.service.GameService;
 import com.pubquiz.backend.service.QuestionBank;
+import com.pubquiz.backend.service.QuizService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

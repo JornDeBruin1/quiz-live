@@ -28,4 +28,9 @@ public class ApiExceptionHandler {
     public ResponseEntity<Void> handleInvalidGameState() {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
+
+    @ExceptionHandler(QuizNotFoundException.class)
+    public ResponseEntity<Void> quizNotFound() {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
 }
