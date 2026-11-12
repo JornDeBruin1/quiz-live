@@ -11,6 +11,8 @@ function HostPage() {
 
   const [game, setGame] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null);
+  // true zolang een vraag loopt; dan mag de host niet doorklikken
+  const [questionActive, setQuestionActive] = useState(false);
   const event = useGameSocket(game?.gameCode);
 
   useEffect(() => {
@@ -22,10 +24,16 @@ function HostPage() {
 
     if (event.type === "QUESTION_STARTED") {
       setCurrentQuestion(event.payload);
+      setQuestionActive(true);
+    }
+
+    if (event.type === "QUESTION_ENDED") {
+      setQuestionActive(false);
     }
 
     if (event.type === "GAME_FINISHED") {
       setCurrentQuestion(null);
+      setQuestionActive(false);
     }
   }, [event]);
 
@@ -69,7 +77,9 @@ function HostPage() {
         </div>
       )}
 
-      <button onClick={handleNextQuestion}>Volgende vraag</button>
+      <button onClick={handleNextQuestion} disabled={questionActive}>
+        {questionActive ? "Vraag loopt..." : "Volgende vraag"}
+      </button>
     </div>
   );
 }

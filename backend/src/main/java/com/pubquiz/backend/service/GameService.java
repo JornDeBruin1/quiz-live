@@ -1,6 +1,7 @@
 package com.pubquiz.backend.service;
 
 import com.pubquiz.backend.exception.ForbiddenException;
+import com.pubquiz.backend.exception.InvalidGameStateException;
 import com.pubquiz.backend.model.Game;
 import com.pubquiz.backend.model.GameEvent;
 import com.pubquiz.backend.model.Player;
@@ -77,6 +78,10 @@ public class GameService {
         }
         if (!game.isOwnedBy(hostId)) {
             throw new ForbiddenException();
+        }
+        String state = game.getGameState();
+        if (!state.equals("LOBBY") && !state.equals("QUESTION_ENDED")) {
+            throw new InvalidGameStateException();
         }
 
         int nextIndex = game.getCurrentQuestionIndex() + 1;

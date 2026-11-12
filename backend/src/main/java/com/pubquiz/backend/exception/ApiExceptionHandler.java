@@ -23,4 +23,9 @@ public class ApiExceptionHandler {
     public ResponseEntity<Void> forbidden() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
+
+    @ExceptionHandler(InvalidGameStateException.class)
+    public ResponseEntity<Void> handleInvalidGameState() {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    }
 }
