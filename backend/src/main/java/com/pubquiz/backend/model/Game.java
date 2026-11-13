@@ -128,4 +128,9 @@ public class Game {
         }
         return null;
     }
+
+    // Hebben alle spelers in dit spel al geantwoord op de huidige vraag?
+    public boolean allPlayersAnswered() {
+        return players.stream().allMatch(p -> playersWhoAnswered.contains(p.getName()));
+    }
 }

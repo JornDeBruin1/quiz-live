@@ -8,12 +8,14 @@ import Login from "./pages/Login";
 import Register from "./pages/register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MyQuizzesPage from "./pages/MyQuizzesPage";
+import ThemeToggle from "./components/ThemeToggle";
 import "./App.css";
 
 function App() {
   return (
     <BrowserRouter>
       <div className="app">
+        <ThemeToggle />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/host" element={<ProtectedRoute><HostPage /></ProtectedRoute>} />

@@ -140,6 +140,11 @@ public class GameService {
 
         broadcast(gameCode, "ANSWER_SUBMITTED", game);
 
+        // Iedereen heeft geantwoord: niet wachten op de timer
+        if (game.allPlayersAnswered()) {
+            endQuestion(gameCode, game);
+        }
+
         return true;
     }
 

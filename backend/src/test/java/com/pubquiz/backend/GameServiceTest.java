@@ -20,6 +20,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import com.pubquiz.backend.model.Player;
+
+import static org.mockito.Mockito.times;
 
 import java.util.Optional;
 
@@ -164,5 +167,42 @@ class GameServiceTest {
         Game game = gameService.createGame("quiz-1", HOST_ID);
 
         assertThat(game.getQuizId()).isEqualTo("quiz-1");
+    }
+
+        @Test
+    void submitAnswer_lastPlayerAnswers_endsQuestionEarly() {
+        Game game = new Game(GAME_CODE, HOST_ID);
+        game.addPlayer(new Player("anna"));
+        game.addPlayer(new Player("bram"));
+        game.startNextQuestion(20);
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        assertThat(gameService.submitAnswer(GAME_CODE, "anna", "x")).isTrue();
+        assertThat(game.getGameState()).isEqualTo("QUESTION_ACTIVE");
+
+        assertThat(gameService.submitAnswer(GAME_CODE, "bram", "x")).isTrue();
+        assertThat(game.getGameState()).isEqualTo("QUESTION_ENDED");
+
+        ArgumentCaptor<GameEvent> events = ArgumentCaptor.forClass(GameEvent.class);
+        verify(messagingTemplate, times(3))
+                .convertAndSend(eq("/topic/game/" + GAME_CODE), events.capture());
+        assertThat(events.getAllValues()).extracting(GameEvent::getType)
+                .containsExactly("ANSWER_SUBMITTED", "ANSWER_SUBMITTED", "QUESTION_ENDED");
+    }
+
+    @Test
+    void submitAnswer_whileOtherPlayerStillToAnswer_keepsQuestionActive() {
+        Game game = new Game(GAME_CODE, HOST_ID);
+        game.addPlayer(new Player("anna"));
+        game.addPlayer(new Player("bram"));
+        game.startNextQuestion(20);
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        gameService.submitAnswer(GAME_CODE, "anna", "x");
+
+        assertThat(game.getGameState()).isEqualTo("QUESTION_ACTIVE");
+        ArgumentCaptor<GameEvent> event = ArgumentCaptor.forClass(GameEvent.class);
+        verify(messagingTemplate).convertAndSend(eq("/topic/game/" + GAME_CODE), event.capture());
+        assertThat(event.getValue().getType()).isEqualTo("ANSWER_SUBMITTED");
     }
 }
