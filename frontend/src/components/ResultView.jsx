@@ -4,13 +4,14 @@ function ResultView({ questionResult }) {
       <h2>Correct antwoord:</h2>
       <p className="correct-answer">{questionResult.correctAnswer}</p>
       <h3>Stand:</h3>
-      <ol>
+      <ol className="leaderboard">
         {questionResult.leaderboard
           .slice()
           .sort((a, b) => b.score - a.score)
           .map((player) => (
             <li key={player.name}>
-              {player.name} — {player.score} punten
+              <span className="name">{player.name}</span>
+              <span>{player.score} punten</span>
             </li>
           ))}
       </ol>
