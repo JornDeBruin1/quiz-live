@@ -7,7 +7,11 @@ function PlayerQuestionView({ currentQuestion, onAnswer }) {
       <h2>{currentQuestion.text}</h2>
       <div className="answers">
         {currentQuestion.answers.map((answer) => (
-          <button key={answer} onClick={() => onAnswer(answer)}>
+          <button
+            key={answer}
+            className="answer-option"
+            onClick={() => onAnswer(answer)}
+          >
             {answer}
           </button>
         ))}

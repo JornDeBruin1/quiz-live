@@ -26,6 +26,7 @@
 }
 
 .answer-option {
+  margin-top: 0;
   padding: var(--space-4);
   color: var(--color-text);
   background: var(--color-surface);
@@ -108,4 +109,37 @@
   color: var(--color-text);
   background: var(--color-surface);
   border: 2px solid var(--color-border);
+}
+
+/* Alleen apparaten met een muis krijgen hover; op een telefoon blijft :hover na een tik hangen */
+@media (hover: hover) {
+  .answer-option:hover:not(:disabled) {
+    border-color: var(--color-primary);
+  }
+}
+
+/* Directe terugkoppeling bij het aantikken */
+.answer-option:active:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.result-banner {
+  padding: var(--space-5) var(--space-4);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-2xl);
+  font-weight: bold;
+  color: var(--color-on-color);
+  border-radius: var(--radius);
+}
+
+.result-banner.correct {
+  background: var(--color-success);
+}
+
+.result-banner.incorrect {
+  background: var(--color-danger);
 }

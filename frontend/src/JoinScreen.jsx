@@ -28,12 +28,17 @@ function JoinScreen({ onJoined }) {
       <form onSubmit={handleSubmit}>
         <input
           type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          aria-label="Gamecode"
           placeholder="Gamecode"
           value={gameCode}
           onChange={(e) => setGameCode(e.target.value)}
         />
         <input
           type="text"
+          autoComplete="off"
+          aria-label="Jouw naam"
           placeholder="Jouw naam"
           value={playerName}
           onChange={(e) => setPlayerName(e.target.value)}
@@ -42,7 +47,7 @@ function JoinScreen({ onJoined }) {
           {loading ? "Bezig..." : "Join"}
         </button>
       </form>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
     </div>
   );
 }

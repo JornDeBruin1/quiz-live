@@ -6,11 +6,11 @@ function PlayerAnsweredView({ deadline, answerFailed }) {
     <div className="player-game">
       <Timer deadline={deadline} />
       {answerFailed ? (
-        <p>Je antwoord is niet geteld.</p>
+        <p className="error" role="alert">Je antwoord is niet geteld.</p>
       ) : (
         <>
-          <p>Antwoord verstuurd!</p>
-          <p>Wachten op de andere spelers...</p>
+          <h2>Antwoord verstuurd!</h2>
+          <p className="muted">Wachten op de andere spelers...</p>
         </>
       )}
     </div>

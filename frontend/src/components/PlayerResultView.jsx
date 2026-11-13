@@ -4,10 +4,15 @@ function PlayerResultView({ questionResult, selectedAnswer, playerName }) {
 
   return (
     <div className="player-game">
-      <p>Correct antwoord: {questionResult.correctAnswer}</p>
-      <p>{wasCorrect ? "Goed!" : "Fout!"}</p>
-      {me && <p>Jouw totaalscore: {me.score} punten</p>}
-      <p>Wachten op de volgende vraag...</p>
+      <p
+        className={`result-banner ${wasCorrect ? "correct" : "incorrect"}`}
+        role="status"
+      >
+        {wasCorrect ? "Goed!" : "Fout!"}
+      </p>
+      <p>Correct antwoord: <strong>{questionResult.correctAnswer}</strong></p>
+      {me && <p>Jouw totaalscore: <strong>{me.score} punten</strong></p>}
+      <p className="muted">Wachten op de volgende vraag...</p>
     </div>
   );
 }
