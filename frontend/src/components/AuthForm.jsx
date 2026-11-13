@@ -17,14 +17,14 @@ export default function AuthForm({ title, submitLabel, passwordAutoComplete, onS
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="auth-form" onSubmit={handleSubmit}>
       <h1>{title}</h1>
       <input value={username} onChange={(e) => setUsername(e.target.value)}
-             placeholder="Gebruikersnaam" autoComplete="username" />
+             aria-label="Gebruikersnaam" placeholder="Gebruikersnaam" autoComplete="username" />
       <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-             placeholder="Wachtwoord" autoComplete={passwordAutoComplete} />
+             aria-label="Wachtwoord" placeholder="Wachtwoord" autoComplete={passwordAutoComplete} />
       <button type="submit">{submitLabel}</button>
-      {error && <p>{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
       {footer}
     </form>
   );

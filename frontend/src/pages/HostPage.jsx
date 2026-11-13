@@ -94,7 +94,7 @@ function HostPage() {
       <LogoutButton />
       <p className="game-code">Gamecode: {game.gameCode}</p>
       <h2>Spelers ({game.players.length})</h2>
-      <ul>
+      <ul className="player-list">
         {game.players.map((player) => (
           <li key={player.name}>
             {player.name} — {player.score} punten

@@ -5,7 +5,7 @@ export default function QuizList({ quizzes }) {
     return <p>Je hebt nog geen quizzen.</p>;
   }
   return (
-    <ul>
+    <ul className="quiz-list">
       {quizzes.map((quiz) => (
         <QuizListItem key={quiz.id} quiz={quiz} />
       ))}

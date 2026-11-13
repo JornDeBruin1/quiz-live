@@ -1,7 +1,6 @@
 import { Link, Navigate } from "react-router-dom";
 import { useMyQuizzes } from "../hooks/useMyQuizzes";
 import QuizList from "../components/QuizList";
-import LogoutButton from "../components/LogoutButton";
 
 export default function MyQuizzesPage() {
   const { quizzes, loading, error } = useMyQuizzes();
@@ -12,11 +11,13 @@ export default function MyQuizzesPage() {
   }
 
   return (
-    <div>
+    <div className="my-quizzes-page">
       <h1>Mijn quizzen</h1>
-      <Link to="/quiz-editor">Nieuwe quiz maken</Link> <LogoutButton />
+      <Link to="/quiz-editor" className="button-link">Nieuwe quiz maken</Link>
       {loading && <p>Laden...</p>}
-      {error && error.status !== 401 && <p>Kon de quizzen niet laden.</p>}
+      {error && error.status !== 401 && (
+        <p className="error" role="alert">Kon de quizzen niet laden.</p>
+      )}
       {!loading && !error && <QuizList quizzes={quizzes} />}
     </div>
   );

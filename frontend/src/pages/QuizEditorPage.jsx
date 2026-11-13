@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import useQuizEditor from "../hooks/useQuizEditor";
 import QuestionEditor from "../components/QuestionEditor";
-import LogoutButton from "../components/LogoutButton";
 function QuizEditorPage() {
   const navigate = useNavigate();
   const {
@@ -24,7 +23,6 @@ function QuizEditorPage() {
   return (
     <div className="quiz-editor">
       <h1>Nieuwe quiz maken</h1>
-      <LogoutButton />
       <input
         type="text"
         placeholder="Titel van de quiz"
@@ -45,7 +43,7 @@ function QuizEditorPage() {
           />
         ))}
 
-      <button onClick={addNewQuestion}>+ Vraag toevoegen</button>
+      <button className="secondary" onClick={addNewQuestion}>+ Vraag toevoegen</button>
       <button onClick={handleSave}>Quiz opslaan en spel starten</button>
     </div>
   );

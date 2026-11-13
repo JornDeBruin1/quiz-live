@@ -101,15 +101,152 @@
   font-weight: bold;
   color: var(--color-success);
 }
-.theme-toggle {
-  display: block;
+
+/* Header */
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: 2px solid var(--color-border);
+  text-align: left;
+}
+
+.app-header .brand {
+  display: flex;
+  align-items: center;
   min-height: var(--tap-min);
-  margin: 0 0 var(--space-3) auto;
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.app-header nav {
+  order: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.app-header nav a {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  color: var(--color-text);
+  text-decoration: none;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+}
+
+.app-header nav a[aria-current="page"] {
+  font-weight: bold;
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.app-header .actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.app-header button {
+  margin-top: 0;
   padding: var(--space-1) var(--space-3);
   color: var(--color-text);
   background: var(--color-surface);
   border: 2px solid var(--color-border);
 }
+
+/* Knop-uiterlijk voor een link */
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-5);
+  color: var(--color-on-color);
+  background: var(--color-primary);
+  text-decoration: none;
+  border-radius: var(--radius);
+}
+
+/* Formulieren */
+.auth-form,
+.question-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.auth-form button {
+  margin-top: 0;
+}
+
+.quiz-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.quiz-editor > button {
+  margin-top: 0;
+}
+
+/* Rustigere knop voor acties die niet de hoofdactie zijn */
+button.secondary {
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+}
+
+.question-editor {
+  padding: var(--space-4);
+  text-align: left;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.question-editor h3 {
+  margin: 0;
+}
+
+.question-editor > button {
+  align-self: flex-start;
+  margin-top: 0;
+  background: var(--color-danger);
+}
+
+/* Host-paneel */
+.host-page .game-code {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  color: var(--color-link);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.current-question {
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+
 
 /* Alleen apparaten met een muis krijgen hover; op een telefoon blijft :hover na een tik hangen */
 @media (hover: hover) {
@@ -236,4 +373,33 @@
 
 .leaderboard .name {
   flex: 1;
+}
+
+.quiz-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quiz-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+/* "Spel starten" rechts in de kaart, met een goede tikgrootte */
+.quiz-list li > a:last-child {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  margin-left: auto;
 }

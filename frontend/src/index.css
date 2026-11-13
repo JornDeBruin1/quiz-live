@@ -12,6 +12,7 @@
   --color-success-text: #15803d;
   --color-danger-text: #b91c1c;
   --color-on-color: #ffffff;
+  --color-link: #1d4ed8;
 
   /* ruimte en vorm */
   --space-1: 0.25rem;
@@ -43,6 +44,7 @@
   --color-border: #334155;
   --color-success-text: #4ade80;
   --color-danger-text: #f87171;
+  --color-link: #93c5fd;
 }
 
 /* Kleine reset: breedtes rekenen inclusief padding en rand */
@@ -108,6 +110,21 @@ input:not([type="checkbox"]):not([type="radio"]) {
 :focus-visible {
   outline: 3px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+a {
+  color: var(--color-link);
+}
+
+select {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
 }
 
 @media (min-width: 600px) {
