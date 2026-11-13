@@ -1,6 +1,9 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { isSignedIn } from "../api/session";
 
 export default function ProtectedRoute({ children }) {
-  return isSignedIn() ? children : <Navigate to="/login" replace />;
+  const location = useLocation();
+  return isSignedIn()
+    ? children
+    : <Navigate to="/login" replace state={{ from: location }} />;
 }
