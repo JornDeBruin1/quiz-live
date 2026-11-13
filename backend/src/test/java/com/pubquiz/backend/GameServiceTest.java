@@ -8,6 +8,10 @@ import com.pubquiz.backend.repository.GameRepository;
 import com.pubquiz.backend.service.GameService;
 import com.pubquiz.backend.service.QuestionBank;
 import com.pubquiz.backend.service.QuizService;
+import com.pubquiz.backend.exception.QuizNotFoundException;
+import com.pubquiz.backend.model.Quiz;
+
+import static org.mockito.ArgumentMatchers.any;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -125,5 +129,40 @@ class GameServiceTest {
 
         assertThat(result).isFalse();
         verifyNoInteractions(messagingTemplate);
+    }
+
+     @Test
+    void createGame_withUnknownQuizId_throwsQuizNotFound() {
+        // Arrange: getOwnedQuiz geeft null als de quiz niet bestaat
+        when(quizService.getOwnedQuiz("123123", HOST_ID)).thenReturn(null);
+
+        // Act + Assert
+        assertThatThrownBy(() -> gameService.createGame("123123", HOST_ID))
+                .isInstanceOf(QuizNotFoundException.class);
+
+        // Er is geen half spel aangemaakt
+        verifyNoInteractions(gameRepository);
+    }
+
+    @Test
+    void createGame_withoutQuizId_usesDemoQuestionsAndSkipsQuizLookup() {
+        when(gameRepository.save(any(Game.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Game game = gameService.createGame(null, HOST_ID);
+
+        assertThat(game.getQuizId()).isNull();
+        assertThat(game.getGameState()).isEqualTo("LOBBY");
+        verifyNoInteractions(quizService);
+    }
+
+    @Test
+    void createGame_withOwnedQuiz_linksQuizToGame() {
+        Quiz quiz = new Quiz("quiz-1", "Testquiz", HOST_ID);
+        when(quizService.getOwnedQuiz("quiz-1", HOST_ID)).thenReturn(quiz);
+        when(gameRepository.save(any(Game.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Game game = gameService.createGame("quiz-1", HOST_ID);
+
+        assertThat(game.getQuizId()).isEqualTo("quiz-1");
     }
 }
