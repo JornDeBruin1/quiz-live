@@ -4,7 +4,7 @@ import useGameSocket from "../useGameSocket";
 import { createGame, startNextQuestion } from "../api/gameApi";
 import { describeGameError } from "../api/GameErrors";
 import LogoutButton from "../components/LogoutButton";
-
+import useHostQuiz from "../hooks/useHostQuiz";
 
 function HostPage() {
   const [searchParams] = useSearchParams();
@@ -18,6 +18,7 @@ function HostPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const event = useGameSocket(game?.gameCode);
+  const { quiz, error: quizError, loading: quizLoading } = useHostQuiz(quizId);
 
   useEffect(() => {
     if (!event) return;
@@ -70,8 +71,16 @@ function HostPage() {
     return (
       <div className="host-page">
         <h1>Host</h1>
-        {quizId ? <p>Quiz geladen, klaar om te starten.</p> : <p>Demo-quiz wordt gebruikt.</p>}
-        <button onClick={handleCreateGame} disabled={busy}>
+        {!quizId && <p>Demo-quiz wordt gebruikt.</p>}
+        {quizLoading && <p>Quiz laden...</p>}
+        {quiz && <p>Quiz: {quiz.title}</p>}
+        {quizError && (
+          <p className="error" role="alert">{describeGameError(quizError)}</p>
+        )}
+        <button
+          onClick={handleCreateGame}
+          disabled={busy || quizLoading || Boolean(quizError)}
+        >
           {busy ? "Bezig..." : "Nieuw spel starten"}
         </button>
         {error && <p className="error" role="alert">{error}</p>}

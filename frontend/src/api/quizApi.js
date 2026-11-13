@@ -14,3 +14,7 @@ export function addQuestion(quizId, { text, answers, correctAnswer }) {
 export function listMyQuizzes() {
   return request("/quizzes");
 }
+
+export function getQuiz(quizId) {
+  return request(`/quizzes/${quizId}`);
+}
