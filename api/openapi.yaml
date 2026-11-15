@@ -76,6 +76,8 @@ paths:
                 $ref: '#/components/schemas/PlayerResponse'
         '404':
           description: Spel niet gevonden
+        '409':
+          description: Deze naam is al in gebruik in dit spel
 
   /api/games/{code}/next-question:
     post:

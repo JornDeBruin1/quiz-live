@@ -33,4 +33,9 @@ public class ApiExceptionHandler {
     public ResponseEntity<Void> quizNotFound() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
+
+    @ExceptionHandler(PlayerNameTakenException.class)
+    public ResponseEntity<Void> playerNameTaken() {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    }
 }

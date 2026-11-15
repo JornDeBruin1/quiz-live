@@ -18,9 +18,14 @@ export async function joinGame(gameCode, playerName) {
       body: { name: playerName },
     });
   } catch (error) {
-    // Zelfde melding als in de oude api.js; netwerkfouten laten we ongemoeid
     if (error instanceof ApiError) {
-      throw new Error("Kon niet joinen. Klopt de gamecode?");
+      if (error.status === 404) {
+        throw new Error("Geen spel gevonden met deze code. Controleer de code en probeer het opnieuw.");
+      }
+      if (error.status === 409) {
+        throw new Error("Deze naam is al in gebruik in dit spel. Kies een andere naam.");
+      }
+      throw new Error("Kon niet meedoen. Probeer het zo opnieuw.");
     }
     throw error;
   }

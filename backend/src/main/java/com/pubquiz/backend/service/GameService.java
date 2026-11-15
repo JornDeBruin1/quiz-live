@@ -2,6 +2,7 @@ package com.pubquiz.backend.service;
 
 import com.pubquiz.backend.exception.ForbiddenException;
 import com.pubquiz.backend.exception.InvalidGameStateException;
+import com.pubquiz.backend.exception.PlayerNameTakenException;
 import com.pubquiz.backend.exception.QuizNotFoundException;
 import com.pubquiz.backend.model.Game;
 import com.pubquiz.backend.model.GameEvent;
@@ -59,12 +60,17 @@ public class GameService {
     @Transactional
     public Player addPlayer(String gameCode, String playerName) {
         Game game = gameRepository.findForUpdate(gameCode).orElse(null);
-
+        
         if (game == null) {
             return null;
         }
 
-        Player player = new Player(playerName);
+        String cleanName = playerName.trim();
+        if (game.hasPlayerNamed(cleanName)) {
+            throw new PlayerNameTakenException();
+        }
+
+        Player player = new Player(cleanName);
         game.addPlayer(player);
 
         broadcast(gameCode, "PLAYER_JOINED", game);

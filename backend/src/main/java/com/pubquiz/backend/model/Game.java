@@ -137,4 +137,9 @@ public class Game {
     public boolean allPlayersAnswered() {
         return players.stream().allMatch(p -> playersWhoAnswered.contains(p.getName()));
     }
+
+    // Namen zijn uniek binnen een spel, zonder onderscheid tussen hoofd- en kleine letters
+    public boolean hasPlayerNamed(String name) {
+        return players.stream().anyMatch(p -> p.getName().equalsIgnoreCase(name));
+    }
 }

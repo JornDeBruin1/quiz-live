@@ -2,6 +2,7 @@ package com.pubquiz.backend;
 
 import com.pubquiz.backend.exception.ForbiddenException;
 import com.pubquiz.backend.exception.InvalidGameStateException;
+import com.pubquiz.backend.exception.PlayerNameTakenException;
 import com.pubquiz.backend.model.Game;
 import com.pubquiz.backend.model.GameEvent;
 import com.pubquiz.backend.repository.GameRepository;
@@ -275,5 +276,65 @@ class GameServiceTest {
         ArgumentCaptor<GameEvent> event = ArgumentCaptor.forClass(GameEvent.class);
         verify(messagingTemplate).convertAndSend(eq("/topic/game/" + GAME_CODE), event.capture());
         assertThat(event.getValue().getType()).isEqualTo("QUESTION_ENDED");
+    }
+
+    @Test
+    void addPlayer_withNewName_addsPlayerAndBroadcasts() {
+        Game game = new Game(GAME_CODE, HOST_ID);
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        Player player = gameService.addPlayer(GAME_CODE, "Anna");
+
+        assertThat(player.getName()).isEqualTo("Anna");
+        assertThat(game.getPlayers()).hasSize(1);
+
+        ArgumentCaptor<GameEvent> event = ArgumentCaptor.forClass(GameEvent.class);
+        verify(messagingTemplate).convertAndSend(eq("/topic/game/" + GAME_CODE), event.capture());
+        assertThat(event.getValue().getType()).isEqualTo("PLAYER_JOINED");
+    }
+
+    @Test
+    void addPlayer_withSameName_isRejected() {
+        Game game = new Game(GAME_CODE, HOST_ID);
+        game.addPlayer(new Player("Anna"));
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        assertThatThrownBy(() -> gameService.addPlayer(GAME_CODE, "Anna"))
+                .isInstanceOf(PlayerNameTakenException.class);
+
+        assertThat(game.getPlayers()).hasSize(1);
+        verifyNoInteractions(messagingTemplate);
+    }
+
+    @Test
+    void addPlayer_withDifferentCase_isRejected() {
+        Game game = new Game(GAME_CODE, HOST_ID);
+        game.addPlayer(new Player("Anna"));
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        assertThatThrownBy(() -> gameService.addPlayer(GAME_CODE, "anna"))
+                .isInstanceOf(PlayerNameTakenException.class);
+
+        assertThat(game.getPlayers()).hasSize(1);
+    }
+
+    @Test
+    void addPlayer_withSurroundingSpaces_trimsNameAndDetectsDuplicate() {
+        Game game = new Game(GAME_CODE, HOST_ID);
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        Player player = gameService.addPlayer(GAME_CODE, "  Anna ");
+        assertThat(player.getName()).isEqualTo("Anna");
+
+        assertThatThrownBy(() -> gameService.addPlayer(GAME_CODE, "ANNA  "))
+                .isInstanceOf(PlayerNameTakenException.class);
+    }
+
+    @Test
+    void addPlayer_forUnknownGame_returnsNull() {
+        when(gameRepository.findForUpdate("000000")).thenReturn(Optional.empty());
+
+        assertThat(gameService.addPlayer("000000", "Anna")).isNull();
+        verifyNoInteractions(messagingTemplate);
     }
 }
