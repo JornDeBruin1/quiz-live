@@ -167,7 +167,9 @@ public class GameService {
 
         if (isCorrect) {
             int points = calculatePoints(game);
+            long elapsedMs = System.currentTimeMillis() - game.getQuestionStartTime();
             player.addScore(points);
+            player.addAnswerTime(elapsedMs);
         }
 
         broadcast(gameCode, "ANSWER_SUBMITTED", game);

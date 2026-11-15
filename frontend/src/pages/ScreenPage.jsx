@@ -3,10 +3,11 @@ import useScreenState from "../hooks/useScreenState";
 import LobbyView from "../components/LobbyView";
 import QuestionView from "../components/QuestionView";
 import ResultView from "../components/ResultView";
+import FinalStandingsView from "../components/FinalStandingsView";
 
 function ScreenPage() {
   const { gameCode } = useParams();
-  const { game, error, currentQuestion, questionResult } =
+  const { game, error, currentQuestion, questionResult, finalStandings } =
     useScreenState(gameCode);
 
   if (error) {
@@ -23,6 +24,14 @@ function ScreenPage() {
 
   if (questionResult) {
     return <ResultView questionResult={questionResult} />;
+  }
+
+  if (finalStandings) {
+    return <FinalStandingsView standings={finalStandings} />;
+  }
+
+  if (!currentQuestion) {
+    return <LobbyView gameCode={gameCode} players={game.players} />;
   }
 
   return <QuestionView currentQuestion={currentQuestion} />;

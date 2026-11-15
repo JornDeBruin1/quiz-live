@@ -5,15 +5,12 @@ function ResultView({ questionResult }) {
       <p className="correct-answer">{questionResult.correctAnswer}</p>
       <h3>Stand:</h3>
       <ol className="leaderboard">
-        {questionResult.leaderboard
-          .slice()
-          .sort((a, b) => b.score - a.score)
-          .map((player) => (
-            <li key={player.name}>
-              <span className="name">{player.name}</span>
-              <span>{player.score} punten</span>
-            </li>
-          ))}
+        {sortStandings(questionResult.leaderboard).map((player) => (
+          <li key={player.name}>
+            <span className="name">{player.name}</span>
+            <span>{player.score} punten</span>
+          </li>
+        ))}
       </ol>
     </div>
   );

@@ -45,7 +45,7 @@ function HostPage() {
 
     if (event.type === "GAME_FINISHED") {
       setCurrentQuestion(null);
-      setPhase("idle");
+      setPhase("finished");
     }
   }, [event]);
 
@@ -132,6 +132,7 @@ function HostPage() {
           Volgende vraag
         </button>
       )}
+      {phase === "finished" && <p>Quiz afgelopen.</p>}
       {error && <p className="error" role="alert">{error}</p>}
     </div>
   );

@@ -22,9 +22,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import com.pubquiz.backend.model.Player;
+import com.pubquiz.backend.model.Question;
 
 import static org.mockito.Mockito.times;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -336,5 +338,29 @@ class GameServiceTest {
 
         assertThat(gameService.addPlayer("000000", "Anna")).isNull();
         verifyNoInteractions(messagingTemplate);
+    }
+
+    @Test
+    void submitAnswer_correctAnswer_scoresPointsAndRecordsTime() {
+        Quiz quiz = new Quiz("quiz-1", "Testquiz", HOST_ID);
+        quiz.addQuestion(new Question("q1", "Vraag?", List.of("a", "b"), "a"));
+        when(quizService.getQuiz("quiz-1")).thenReturn(quiz);
+
+        Game game = new Game(GAME_CODE, HOST_ID);
+        game.setQuizId("quiz-1");
+        Player anna = new Player("anna");
+        Player bram = new Player("bram");
+        game.addPlayer(anna);
+        game.addPlayer(bram);
+        game.startNextQuestion(20);
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        gameService.submitAnswer(GAME_CODE, "anna", "a");
+        gameService.submitAnswer(GAME_CODE, "bram", "b");
+
+        assertThat(anna.getScore()).isGreaterThan(0);
+        assertThat(anna.getTotalAnswerTimeMs()).isBetween(0L, 20_000L);
+        assertThat(bram.getScore()).isZero();
+        assertThat(bram.getTotalAnswerTimeMs()).isZero();
     }
 }

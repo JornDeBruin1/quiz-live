@@ -16,6 +16,17 @@ public class Player {
 
     private String name;
     private int score = 0;
+    private Long totalAnswerTimeMs = 0L;
+
+    // Totale antwoordtijd van alle goede antwoorden, voor de volgorde bij gelijke score.
+    // Long (niet long): bestaande rijen in de database hebben hier nog NULL.
+    public long getTotalAnswerTimeMs() {
+        return totalAnswerTimeMs == null ? 0 : totalAnswerTimeMs;
+    }
+
+    public void addAnswerTime(long millis) {
+        this.totalAnswerTimeMs = getTotalAnswerTimeMs() + millis;
+    }
 
     // Verplicht voor JPA, wij gebruiken hem zelf niet
     protected Player() {

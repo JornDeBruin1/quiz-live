@@ -6,6 +6,7 @@ function useScreenState(gameCode) {
   const { game, setGame, error } = useGame(gameCode);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [questionResult, setQuestionResult] = useState(null);
+  const [finalStandings, setFinalStandings] = useState(null);
   const event = useGameSocket(gameCode);
 
   useEffect(() => {
@@ -27,10 +28,11 @@ function useScreenState(gameCode) {
     if (event.type === "GAME_FINISHED") {
       setCurrentQuestion(null);
       setQuestionResult(null);
+      setFinalStandings(event.payload);
     }
   }, [event, setGame]);
 
-  return { game, error, currentQuestion, questionResult };
+  return { game, error, currentQuestion, questionResult, finalStandings };
 }
 
 export default useScreenState;

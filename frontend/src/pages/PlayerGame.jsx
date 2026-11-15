@@ -12,11 +12,14 @@ function PlayerGame({ gameCode, playerName }) {
     gameFinished,
     answerFailed,
     answeringClosed,
+    finalStandings,
     handleAnswer,
   } = usePlayerGame(gameCode, playerName);
 
   if (gameFinished) {
-    return <PlayerFinishedView playerName={playerName} />;
+    return (
+      <PlayerFinishedView playerName={playerName} standings={finalStandings} />
+    );
   }
 
   if (!currentQuestion) {

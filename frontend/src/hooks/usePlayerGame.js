@@ -9,6 +9,7 @@ function usePlayerGame(gameCode, playerName) {
   const [gameFinished, setGameFinished] = useState(false);
   const [answerFailed, setAnswerFailed] = useState(false);
   const [answeringClosed, setAnsweringClosed] = useState(false);
+  const [finalStandings, setFinalStandings] = useState(null);
   const event = useGameSocket(gameCode);
 
   useEffect(() => {
@@ -30,6 +31,7 @@ function usePlayerGame(gameCode, playerName) {
     }
 
     if (event.type === "GAME_FINISHED") {
+      setFinalStandings(event.payload);
       setGameFinished(true);
     }
   }, [event]);
@@ -57,6 +59,7 @@ function usePlayerGame(gameCode, playerName) {
     gameFinished,
     answerFailed,
     answeringClosed,
+    finalStandings,
     handleAnswer,
   };
 }
