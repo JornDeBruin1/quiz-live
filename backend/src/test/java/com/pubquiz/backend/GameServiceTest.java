@@ -96,11 +96,12 @@ class GameServiceTest {
     }
 
     @Test
-    void startNextQuestion_afterQuestionEnded_startsNextQuestion() {
-        // Arrange: vraag 1 is afgelopen
+    void startNextQuestion_afterResultsShown_startsNextQuestion() {
+        // Arrange: vraag 1 is afgelopen en de host heeft de resultaten getoond
         Game game = new Game(GAME_CODE, HOST_ID);
         game.startNextQuestion(20);
         game.endQuestion();
+        game.showResults();
         when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
 
         // Act
@@ -187,7 +188,7 @@ class GameServiceTest {
         verify(messagingTemplate, times(3))
                 .convertAndSend(eq("/topic/game/" + GAME_CODE), events.capture());
         assertThat(events.getAllValues()).extracting(GameEvent::getType)
-                .containsExactly("ANSWER_SUBMITTED", "ANSWER_SUBMITTED", "QUESTION_ENDED");
+                .containsExactly("ANSWER_SUBMITTED", "ANSWER_SUBMITTED", "ANSWERING_CLOSED");
     }
 
     @Test
@@ -204,5 +205,75 @@ class GameServiceTest {
         ArgumentCaptor<GameEvent> event = ArgumentCaptor.forClass(GameEvent.class);
         verify(messagingTemplate).convertAndSend(eq("/topic/game/" + GAME_CODE), event.capture());
         assertThat(event.getValue().getType()).isEqualTo("ANSWER_SUBMITTED");
+    }
+
+    @Test
+    void startNextQuestion_whenQuestionEnded_isRejected() {
+        // Arrange: antwoorden zijn gesloten, maar de host heeft de resultaten nog niet getoond
+        Game game = new Game(GAME_CODE, HOST_ID);
+        game.startNextQuestion(20);
+        game.endQuestion();
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        assertThatThrownBy(() -> gameService.startNextQuestion(GAME_CODE, HOST_ID))
+                .isInstanceOf(InvalidGameStateException.class);
+
+        assertThat(game.getCurrentQuestionIndex()).isEqualTo(0);
+        assertThat(game.getGameState()).isEqualTo("QUESTION_ENDED");
+        verifyNoInteractions(messagingTemplate);
+    }
+
+    @Test
+    void showResults_whenQuestionActive_isRejected() {
+        Game game = new Game(GAME_CODE, HOST_ID);
+        game.startNextQuestion(20);
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        assertThatThrownBy(() -> gameService.showResults(GAME_CODE, HOST_ID))
+                .isInstanceOf(InvalidGameStateException.class);
+
+        assertThat(game.getGameState()).isEqualTo("QUESTION_ACTIVE");
+        verifyNoInteractions(messagingTemplate);
+    }
+
+    @Test
+    void showResults_byOtherHost_isForbidden() {
+        Game game = new Game(GAME_CODE, HOST_ID);
+        game.startNextQuestion(20);
+        game.endQuestion();
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        assertThatThrownBy(() -> gameService.showResults(GAME_CODE, "andere-host"))
+                .isInstanceOf(ForbiddenException.class);
+
+        assertThat(game.getGameState()).isEqualTo("QUESTION_ENDED");
+        verifyNoInteractions(messagingTemplate);
+    }
+
+    @Test
+    void showResults_forUnknownGame_returnsFalse() {
+        when(gameRepository.findForUpdate("000000")).thenReturn(Optional.empty());
+
+        boolean result = gameService.showResults("000000", HOST_ID);
+
+        assertThat(result).isFalse();
+        verifyNoInteractions(messagingTemplate);
+    }
+
+    @Test
+    void showResults_whenQuestionEnded_broadcastsQuestionEnded() {
+        Game game = new Game(GAME_CODE, HOST_ID);
+        game.startNextQuestion(20);
+        game.endQuestion();
+        when(gameRepository.findForUpdate(GAME_CODE)).thenReturn(Optional.of(game));
+
+        boolean result = gameService.showResults(GAME_CODE, HOST_ID);
+
+        assertThat(result).isTrue();
+        assertThat(game.getGameState()).isEqualTo("RESULTS_SHOWN");
+
+        ArgumentCaptor<GameEvent> event = ArgumentCaptor.forClass(GameEvent.class);
+        verify(messagingTemplate).convertAndSend(eq("/topic/game/" + GAME_CODE), event.capture());
+        assertThat(event.getValue().getType()).isEqualTo("QUESTION_ENDED");
     }
 }

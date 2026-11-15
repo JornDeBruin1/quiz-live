@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import useGameSocket from "../useGameSocket";
-import { createGame, startNextQuestion } from "../api/gameApi";
+import { createGame, startNextQuestion, showResults } from "../api/gameApi";
 import { describeGameError } from "../api/GameErrors";
 import LogoutButton from "../components/LogoutButton";
 import useHostQuiz from "../hooks/useHostQuiz";
+
 
 function HostPage() {
   const [searchParams] = useSearchParams();
@@ -19,6 +20,8 @@ function HostPage() {
   const [error, setError] = useState(null);
   const event = useGameSocket(game?.gameCode);
   const { quiz, error: quizError, loading: quizLoading } = useHostQuiz(quizId);
+  // "idle" | "active" | "closed" | "results"
+  const [phase, setPhase] = useState("idle");
 
   useEffect(() => {
     if (!event) return;
@@ -29,16 +32,20 @@ function HostPage() {
 
     if (event.type === "QUESTION_STARTED") {
       setCurrentQuestion(event.payload);
-      setQuestionActive(true);
+      setPhase("active");
+    }
+
+    if (event.type === "ANSWERING_CLOSED") {
+      setPhase("closed");
     }
 
     if (event.type === "QUESTION_ENDED") {
-      setQuestionActive(false);
+      setPhase("results");
     }
 
     if (event.type === "GAME_FINISHED") {
       setCurrentQuestion(null);
-      setQuestionActive(false);
+      setPhase("idle");
     }
   }, [event]);
 
@@ -67,6 +74,10 @@ function HostPage() {
     return runAction(() => startNextQuestion(game.gameCode));
   }
 
+  function handleShowResults() {
+    return runAction(() => showResults(game.gameCode));
+  }
+
   if (!game) {
     return (
       <div className="host-page">
@@ -91,7 +102,6 @@ function HostPage() {
   return (
     <div className="host-page">
       <h1>Host</h1>
-      <LogoutButton />
       <p className="game-code">Gamecode: {game.gameCode}</p>
       <h2>Spelers ({game.players.length})</h2>
       <ul className="player-list">
@@ -109,9 +119,19 @@ function HostPage() {
         </div>
       )}
 
-      <button onClick={handleNextQuestion} disabled={questionActive || busy}>
-        {questionActive ? "Vraag loopt..." : "Volgende vraag"}
-      </button>
+      {phase === "active" && (
+        <button disabled>Vraag loopt...</button>
+      )}
+      {phase === "closed" && (
+        <button onClick={handleShowResults} disabled={busy}>
+          Toon resultaten
+        </button>
+      )}
+      {(phase === "idle" || phase === "results") && (
+        <button onClick={handleNextQuestion} disabled={busy}>
+          Volgende vraag
+        </button>
+      )}
       {error && <p className="error" role="alert">{error}</p>}
     </div>
   );

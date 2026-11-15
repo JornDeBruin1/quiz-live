@@ -91,6 +91,24 @@ paths:
           description: Spel niet gevonden
         '403':
           description: Dit onderdeel is van een andere host
+        '409':
+          description: Het spel is niet in de status LOBBY of RESULTS_SHOWN
+  /api/games/{code}/show-results:
+    post:
+      tags: [games]
+      operationId: showResults
+      summary: Host toont de resultaten van de afgelopen vraag
+      parameters:
+        - $ref: '#/components/parameters/GameCode'
+      responses:
+        '200':
+          description: Resultaten verstuurd naar spelers en scherm
+        '404':
+          description: Spel niet gevonden
+        '403':
+          description: Dit onderdeel is van een andere host
+        '409':
+          description: Het spel is niet in de status QUESTION_ENDED
 
   /api/games/{code}/answer:
     post:
@@ -251,7 +269,7 @@ components:
   schemas:
     GameState:
       type: string
-      enum: [LOBBY, QUESTION_ACTIVE, QUESTION_ENDED]
+      enum: [LOBBY, QUESTION_ACTIVE, QUESTION_ENDED, RESULTS_SHOWN]
 
     PlayerResponse:
       type: object

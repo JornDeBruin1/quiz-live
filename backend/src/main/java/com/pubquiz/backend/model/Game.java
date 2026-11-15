@@ -107,6 +107,10 @@ public class Game {
         gameState = "QUESTION_ENDED";
     }
 
+    public void showResults() {
+        gameState = "RESULTS_SHOWN";
+    }
+
     // Is de deadline al verstreken?
     public boolean isDeadlinePassed() {
         return System.currentTimeMillis() > questionDeadline;

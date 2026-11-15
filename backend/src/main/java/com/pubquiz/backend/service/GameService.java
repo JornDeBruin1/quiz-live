@@ -83,7 +83,7 @@ public class GameService {
             throw new ForbiddenException();
         }
         String state = game.getGameState();
-        if (!state.equals("LOBBY") && !state.equals("QUESTION_ENDED")) {
+        if (!state.equals("LOBBY") && !state.equals("RESULTS_SHOWN")) {
             throw new InvalidGameStateException();
         }
 
@@ -103,6 +103,32 @@ public class GameService {
                 game.getQuestionDeadline()
         );
         broadcast(gameCode, "QUESTION_STARTED", safeQuestion);
+
+        return true;
+    }
+
+    @Transactional
+    public boolean showResults(String gameCode, String hostId) {
+        Game game = gameRepository.findForUpdate(gameCode).orElse(null);
+
+        if (game == null) {
+            return false;
+        }
+        if (!game.isOwnedBy(hostId)) {
+            throw new ForbiddenException();
+        }
+        if (!game.getGameState().equals("QUESTION_ENDED")) {
+            throw new InvalidGameStateException();
+        }
+
+        game.showResults();
+
+        Question question = getQuestionAt(game, game.getCurrentQuestionIndex());
+        QuestionResult result = new QuestionResult(
+                question.getCorrectAnswer(),
+                game.getPlayers()
+        );
+        broadcast(gameCode, "QUESTION_ENDED", result);
 
         return true;
     }
@@ -163,14 +189,7 @@ public class GameService {
 
     private void endQuestion(String gameCode, Game game) {
         game.endQuestion();
-
-        Question question = getQuestionAt(game, game.getCurrentQuestionIndex());
-
-        QuestionResult result = new QuestionResult(
-                question.getCorrectAnswer(),
-                game.getPlayers()
-        );
-        broadcast(gameCode, "QUESTION_ENDED", result);
+        broadcast(gameCode, "ANSWERING_CLOSED", game);
     }
 
     // Haalt een vraag op uit de gekoppelde quiz, of uit de demo-QuestionBank

@@ -36,3 +36,7 @@ export function submitAnswer(gameCode, playerName, answer) {
     body: { playerName, answer },
   });
 }
+
+export function showResults(gameCode) {
+  return request(`/games/${gameCode}/show-results`, { method: "POST" });
+}

@@ -67,6 +67,17 @@ public class GameController implements GamesApi {
         return ResponseEntity.ok().build();
     }
 
+    @Override
+    public ResponseEntity<Void> showResults(String code) {
+        boolean success = gameService.showResults(code, currentHost.id());
+
+        if (!success) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
     // Een speler stuurt zijn antwoord in
     @Override
     public ResponseEntity<Void> submitAnswer(String code, AnswerRequest answerRequest) {
