@@ -151,6 +151,8 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/QuizResponse'
+          '400':
+            description: Ongeldige invoer (lege titel of vraag, te weinig antwoorden, juiste antwoord staat niet tussen de antwoorden)
       get:
         tags: [quizzes]
         operationId: listMyQuizzes
@@ -206,6 +208,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuestionResponse'
+        '400':
+            description: Ongeldige invoer (lege titel of vraag, te weinig antwoorden, juiste antwoord staat niet tussen de antwoorden)
         '404':
           description: Quiz niet gevonden
         '403':
@@ -367,6 +371,8 @@ components:
       properties:
         title:
           type: string
+          pattern: '.*\S.*'
+          maxLength: 255
 
     AddQuestionRequest:
       type: object
@@ -374,12 +380,19 @@ components:
       properties:
         text:
           type: string
+          pattern: '.*\S.*'
+          maxLength: 255
         answers:
           type: array
+          minItems: 2
           items:
             type: string
+            pattern: '.*\S.*'
+            maxLength: 255
         correctAnswer:
           type: string
+          pattern: '.*\S.*'
+          maxLength: 255
     RegisterRequest:
       type: object
       required: [username, password]

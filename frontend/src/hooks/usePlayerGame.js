@@ -8,6 +8,7 @@ function usePlayerGame(gameCode, playerName) {
   const [questionResult, setQuestionResult] = useState(null);
   const [gameFinished, setGameFinished] = useState(false);
   const [answerFailed, setAnswerFailed] = useState(false);
+  const [answeringClosed, setAnsweringClosed] = useState(false);
   const event = useGameSocket(gameCode);
 
   useEffect(() => {
@@ -17,6 +18,11 @@ function usePlayerGame(gameCode, playerName) {
       setCurrentQuestion(event.payload);
       setSelectedAnswer(null);
       setQuestionResult(null);
+      setAnsweringClosed(false);
+    }
+
+    if (event.type === "ANSWERING_CLOSED") {
+      setAnsweringClosed(true);
     }
 
     if (event.type === "QUESTION_ENDED") {
@@ -29,7 +35,7 @@ function usePlayerGame(gameCode, playerName) {
   }, [event]);
 
   async function handleAnswer(answer) {
-    if (selectedAnswer || questionResult) return;
+    if (selectedAnswer || questionResult || answeringClosed) return;
 
     setSelectedAnswer(answer);
     setAnswerFailed(false);
@@ -50,6 +56,7 @@ function usePlayerGame(gameCode, playerName) {
     questionResult,
     gameFinished,
     answerFailed,
+    answeringClosed,
     handleAnswer,
   };
 }

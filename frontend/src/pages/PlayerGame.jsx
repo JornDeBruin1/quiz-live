@@ -11,6 +11,7 @@ function PlayerGame({ gameCode, playerName }) {
     questionResult,
     gameFinished,
     answerFailed,
+    answeringClosed,
     handleAnswer,
   } = usePlayerGame(gameCode, playerName);
 
@@ -42,6 +43,15 @@ function PlayerGame({ gameCode, playerName }) {
         deadline={currentQuestion.deadline}
         answerFailed={answerFailed}
       />
+    );
+  }
+
+  if (answeringClosed) {
+    return (
+      <div className="player-game">
+        <p role="status">Antwoorden gesloten.</p>
+        <p className="muted">Wachten op de resultaten...</p>
+      </div>
     );
   }
 

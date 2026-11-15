@@ -38,4 +38,9 @@ public class ApiExceptionHandler {
     public ResponseEntity<Void> playerNameTaken() {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
+
+    @ExceptionHandler(InvalidQuestionException.class)
+    public ResponseEntity<Void> invalidQuestion() {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
 }

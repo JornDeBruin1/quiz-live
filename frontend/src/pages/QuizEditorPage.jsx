@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import useQuizEditor from "../hooks/useQuizEditor";
 import QuestionEditor from "../components/QuestionEditor";
+import { useState } from "react";
+import { describeGameError } from "../api/GameErrors";
+
 function QuizEditorPage() {
   const navigate = useNavigate();
   const {
@@ -12,12 +15,29 @@ function QuizEditorPage() {
     updateCorrectAnswer,
     addNewQuestion,
     removeQuestion,
+    validate,
     save,
   } = useQuizEditor();
 
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+
   async function handleSave() {
-    const quizId = await save();
-    navigate(`/host?quizId=${quizId}`);
+    const problem = validate();
+    if (problem) {
+      setError(problem);
+      return;
+    }
+
+    setError(null);
+    setSaving(true);
+    try {
+      const quizId = await save();
+      navigate(`/host?quizId=${quizId}`);
+    } catch (err) {
+      setError(describeGameError(err));
+      setSaving(false);
+    }
   }
 
   return (
@@ -44,7 +64,10 @@ function QuizEditorPage() {
         ))}
 
       <button className="secondary" onClick={addNewQuestion}>+ Vraag toevoegen</button>
-      <button onClick={handleSave}>Quiz opslaan en spel starten</button>
+      <button onClick={handleSave} disabled={saving}>
+        {saving ? "Bezig met opslaan..." : "Quiz opslaan en spel starten"}
+      </button>
+      {error && <p className="error" role="alert">{error}</p>}
     </div>
   );
 }

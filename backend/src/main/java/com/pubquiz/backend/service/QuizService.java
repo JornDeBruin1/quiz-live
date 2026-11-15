@@ -1,6 +1,7 @@
 package com.pubquiz.backend.service;
 
 import com.pubquiz.backend.exception.ForbiddenException;
+import com.pubquiz.backend.exception.InvalidQuestionException;
 import com.pubquiz.backend.model.Question;
 import com.pubquiz.backend.model.Quiz;
 import com.pubquiz.backend.repository.QuizRepository;
@@ -52,6 +53,9 @@ public class QuizService {
         }
         if (!quiz.isOwnedBy(hostId)) {
             throw new ForbiddenException();
+        }
+        if (!answers.contains(correctAnswer)) {
+            throw new InvalidQuestionException();
         }
 
         Question question = new Question(UUID.randomUUID().toString(), text, answers, correctAnswer);

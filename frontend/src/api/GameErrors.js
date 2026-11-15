@@ -5,6 +5,8 @@ import { ApiError } from "./client";
 export function describeGameError(error) {
   if (error instanceof ApiError) {
     switch (error.status) {
+      case 400:
+        return "Ongeldige invoer. Controleer de ingevulde gegevens.";
       case 401:
         return "Je sessie is verlopen. Log opnieuw in.";
       case 403:
